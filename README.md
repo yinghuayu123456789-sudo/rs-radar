@@ -1,126 +1,131 @@
-# 遥感研究雷达日报 · 2026-10-01
+# 遥感研究雷达日报 · 2026-10-02（高光谱超分 / 高光谱学习专题）
 
-**本期来源与时间窗口**：arXiv API（`export.arxiv.org/api/query`）共 26 次查询（关键词检索 + `submittedDate:[202609240000 TO 202610012359]` 日期受限检索），时间窗口 **2026-09-24 ~ 2026-10-01（近 7 天）**，按高光谱超分 / 光谱超分 / pansharpening / 高光谱分类 / 解混 / 基础模型 / 光学遥感与非 SAR 对地观测为主线筛选；候选论文的标题与投稿日期已用 `arxiv.org/abs/<id>` 页面复核，声明开源的仓库已用 HTTP 状态码复核。本期为**首期运行，无上一期输出**可对比。未检索 Papers with Code / Hugging Face / 会议日程，故不作相关断言。
-
-**生成日期**：2026-10-01（中国标准时间）
+**本期来源与时间窗口**：arXiv API（`export.arxiv.org/api/query`，`sortBy=submittedDate`，无日期约束抓取 + 客户端日期过滤），三次成功抓取共 32 次查询、去重后 1,963 条记录；窗口定为 **2026-09-25 ～ 2026-10-02**，但 arXiv 索引中新增高光谱论文的最新 `submittedDate` 为 **2026-09-30**（公告队列延迟），故本期有效窗口实际为 **2026-09-25 ～ 2026-09-30**。候选条目的标题/投稿日期用 `arxiv.org/abs/<id>` 页面逐一复核（17/17 一致）；开源仓库用 HTTP 状态码复核。**生成日期：2026-10-02（中国标准时间）**。上一期为 2026-10-01（窗口 09-24～10-01），本期标出「续报」的条目为窗口重叠所致，正文明确区分。
 
 ---
 
-## 一、本期要点（Executive summary）
+## 1. 本期要点（Executive summary）
 
-1. **高光谱超分（HSR）本期只有 2 篇真正的新投稿，但都指向同一条路线：算子/场式表示取代"直接预测光谱值"。** OmniHSR 预测"波段共享空间算子"并用连续算子场做任意尺度重建；SSRON 把光谱超分写成 DeepONet 式的"函数到函数"算子学习。两者都把"跨传感器 / 未见尺度 / 未见波段"当作一等公民，而不是靠目标域微调补救。
-2. **光谱保真度正在从"主干内部"被解耦出来。** SR²-Net 用 0.048M 参数即插即用地校正主干输出（5 种主干平均减少 22.6% 残余光谱误差，2026-09-28 更新）。这与 OmniHSR/SSRON 的组合天然互补：算子场负责尺度与传感器泛化，整流器负责光谱形状。
-3. **高光谱基础模型进入"合成数据 + 复用 RGB 先验"阶段。** HyperSAM（GRSM 接收）用物理引导的丰度迁移从 SpaceNet 多光谱合成全谱立方体、冻结 SAM3 图像分支做提示式分割；作者明确主张"高质量合成高光谱优于粗暴扩大噪声监督"。
-4. **评测规范成为本期最强趋势信号。** 《Hyperspectral Image Models》技术报告统一 55 个模型、6 大范式、24 个场景（含 Mars CRISM），并提供带 Chebyshev 保护带的**空间不重叠分块**协议；其结论"场景难度主导架构、范式间平均只差 15 分、<1M 参数模型可追平大两个数量级的模型"直接挑战当前高光谱论文的对比方式。
-5. **低标签 / 高效适配在本期密集出现**：NE-LoRA（星上 PEFT，带宽受限）、Prototype-Rule 神经符号正则（2–20 样本/类，空间分离折）、波段选择稳定性研究（K=9 时 mIoU +2.01、CPU 推理快 18–22×）共同指向"高光谱的算力/标注约束"而非单纯精度竞赛。
+- **窗口内高光谱相关新增仅 16 篇 new + 3 篇 updated-only，其中 2 篇为纯光谱仪器/光学论文被排除**——这是本期最需要如实说明的一点：本周期属于「小周」，且与上期窗口高度重叠（arXiv 索引最新日期只到 09-30）。高光谱超分主线本周**没有第二波新投稿**，仍是 OmniHSR / SSRON / SR²-Net 三条线（上期已报，本期标「续报」并补可执行细节）。
+- **趋势转折信号：高光谱正在脱离「单帧图像」范式，走向视频 / 时序 / 非图像表示。** 本期三篇新工作同时出现：HyperDAM（高光谱视频目标跟踪，HOTC 2026 私评第 2 名）、INR for Hyperspectral Video Compression（WHISPERS 2026，BD-rate −88.88% 且下游跟踪 AUC +23.42%）、TITAnD v3（把 GPS 轨迹编码成 "Hyperspectral Trajectory Image" 的日×时刻双循环张量）。空间-光谱张量结构开始被当作**通用表示语言**，而不只是遥感影像的属性。**（推断）** 这是本期最值得押注的方向性变化。
+- **EO 基础模型迎来「可复用性」诊断工具。** Reuse or Relearn?（ETH/UZH 组）用奇异子空间保持度、更新秩、更新幅度三项谱诊断量，发现 EO 模型微调时**保留的预训练结构远少于 CLIP/DINO**，且「预训练子空间被保留的地方，适配一小部分参数即可追平全量微调；没被保留的地方就会掉队」。这为 NE-LoRA 一类的星上 PEFT 提供了**先诊断再决定适配策略**的方法论，是上期「低标签/受限算力」线索的升级。
+- **评测规范化的延续，并有可跑代码落地。** Hyperspectral Image Models 技术报告（统一 55 模型 / 24 场景，含带保护带的空间不重叠分块协议）已开源到 `github.com/Tanishq251/Hyperspectral-Image-Models`；本期另外两个新工作把评测推向未解决的评测盲区：PolyTopoBench（NeurIPS 2026 D&B，**带洞/多环复杂多边形**，11 个方法在建筑/道路/植被上集体退化）与 QSCP（查询引导的语义变化解析，支持同义词与「意图句子」提示，SECOND + WHU-CDC 跨数据集）。**（推断）** "现有方法在复杂几何/组合式查询上集体翻车"已成为一条可复用的选题模板。
+- **高光谱分类的输入侧仍有未解决的坑**：Band-Selection Stability（WHISPERS 2026）在 Hyperspectral City V2 上用 10 组独立采样 ROI、6 种选带方法、60 个子集证明「**选带方法的稳定性与下游分割性能没有一致关联**」，K=9 时 mIoU +2.01、CPU 推理快 18–22×，但性能不随 K 单调。这意味着报选带结果必须报告重复采样方差，单次划分的 SOTA 不可信。
 
 ---
 
-## 二、Ranked candidates（12 条，高光谱超分方向置顶）
+## 2. Ranked candidates（窗口 2026-09-25 ～ 2026-09-30）
 
-| 排名 | 标题 | 来源/日期 | 任务 | 数据/模态 | 核心贡献 | 代码/数据 | 评分 | 为什么值得看 |
+评分 = 新颖性 / 技术深度 / 证据强度 / 可复现性 / 趋势信号 / 可迁移性 / 与用户方向（高光谱超分-分类）契合度 的综合（0–10）。「续报」= 上期已列，本期补充新信息，不重复计数。
+
+| 排名 | 标题（arXiv 链接） | 来源 / 日期 | 任务 | 数据 / 模态 | 核心贡献 | 代码 / 数据 | 评分 | 为什么值得看 |
 |---|---|---|---|---|---|---|---|---|
-| 1 | [Super-Resolving Unseen Hyperspectral Sensors at Any Scale via Spatial Operators (OmniHSR)](https://arxiv.org/abs/2609.39926) | arXiv cs.CV / 2026-09-30 新投 | 高光谱超分（跨传感器 + 任意尺度） | 高光谱；仅用 ARAD 训练，Pavia U / Chikusei 等 7 数据集评测 | 预测"波段共享的空间算子"而非光谱值：CSM 把任意波段数重采样到固定参考位置并由高斯支撑预测局部算子，COFR 组合成连续算子场实现任意尺度重建；0.538M 参数，无目标域数据/适配即在 6 个未见数据集上超过直接迁移基线，×2–×48 共 12 个尺度上 Pavia U/Chikusei 平均 PSNR +0.55 dB，推理最快 36× | 摘要称"代码即将公开" | **9.0** | 同时命中"跨传感器泛化"和"任意尺度"两个最难痛点，且模型极小、无需目标域适配，是本方向当前最值得复现的基线 |
-| 2 | [HyperSAM: A Promptable Foundation Model for Hyperspectral Remote Sensing](https://arxiv.org/abs/2609.37340) | arXiv cs.CV / 2026-09-29，IEEE GRSM 接收 | 提示式高光谱基础模型（分类/异常检测/变化检测/目标检测等） | 合成全谱立方体（SpaceNet 多光谱 + 物理引导丰度迁移），HOTC 等真实高光谱下游 | 冻结 SAM3 RGB 图像分支 + 由 RGB ViT 初始化的可训练高光谱侧编码器 + ControlNet 式零初始化特征注入 + 轻量 MoE mask 精修；用 CromSS 式置信度选择加权噪声伪标签；论证高质量合成高光谱比扩大噪声监督更有效 | 摘要未给链接 | **8.5** | "复用 RGB 视觉基础模型 + 合成光谱数据"是目前最完整的落地范式，直接回答"高光谱基础模型能不能不从头训" |
-| 3 | [Hyperspectral Image Models: Technical Report](https://arxiv.org/abs/2609.39871) | arXiv cs.CV / 2026-09-30 | 统一基准与模型库（分类为主） | 55 个模型 × 6 范式；24 个场景（Airborne / Spaceborne / UAV / Mars CRISM） | 统一注册表 + 自动 4D/5D 张量适配 + 标准评估；支持类别均衡随机划分与带 Chebyshev 保护带的**空间不重叠分块**以消除训练/测试像元重叠；1320 组"模型×场景"评估、6600 次种子运行，结论：场景难度主导、范式均值仅差约 15 分、<1M 参数模型可追平大两个数量级的架构 | **开源**（GitHub 已验证 200） | **8.5** | 直接解决高光谱社区"张量约定不统一、窗口重叠导致精度虚高"的顽疾，是现成可用的评测协议与对照表 |
-| 4 | [Spectral Super-Resolution using Spatial-Spectral Residual Operator Networks (SSRON)](https://arxiv.org/abs/2609.35410) | arXiv cs.CV / 2026-09-28，IGARSS 2026 | 光谱超分（MSI → HSI） | Sentinel-2A 类多光谱 → EMIT 高光谱 | 把光谱超分建为算子学习问题，用 Deep Operator Network 学习"降采样光谱 → 连续光谱"的函数到函数映射；所有指标优于基线，并对训练中未见波段做零样本超分，连续输出可外推到比原生传感器更细的波长间隔 | 摘要未声明 | **8.5** | "连续光谱输出 + 未见波段零样本"对跨传感器光谱重建与少样本高光谱生成都很有启发 |
-| 5 | [Resource-Aware Parameter-Efficient Model Adaptation for Onboard High-Dimensional Data (NE-LoRA)](https://arxiv.org/abs/2609.33687) | arXiv cs.CV / 2026-09-27 | 星上高光谱模型高效适配（分类） | 4 个高光谱数据集 × 3 个主干 | 低秩主分支 + 非线性辅助分支，同时捕捉全局更新趋势与复杂光谱-空间变化；针对多矩阵适配器的差异化训练策略；仅更新很小比例参数即稳定超过 LoRA 基线，部分设置与全量微调相当甚至更优 | 摘要未声明 | **7.5** | 面向 LEO 上行带宽受限的真实部署约束，是"数据/带宽高效高光谱适配"的可用配方 |
-| 6 | [Correcting Spectra Outside the Backbone: A Model-Agnostic Rectifier for HSI-SR (SR²-Net)](https://arxiv.org/abs/2601.21338) | arXiv cs.CV / 2026-01-29 首发，**2026-09-28 更新** | 高光谱超分（光谱保真后处理） | 高光谱；CNN / Transformer / 扩散共 5 种主干、30 个域内设置 | 与主干解耦的"增强—校正"整流器：H-S³A 强化跨波段交互，MCR 把校正限制在学习到的紧致光谱子空间，另加退化一致性约束；固定配置在全部报告设置中改善光谱保真度，30 个设置平均消除 22.6% 残余光谱误差，代价仅 0.048M 参数 | 摘要未声明 | **8.0** | 不与主干耦合、即插即用，可直接挂到你现有的任何 HSR 网络上做增益实验 |
-| 7 | [Reuse or Relearn? A Spectral View of Earth Observation Foundation Models](https://arxiv.org/abs/2609.32756) | arXiv cs.LG / 2026-09-26 | 基础模型适配诊断（方法学） | EO 基础模型，CLIP / DINO 作自然图像对照 | 用谱诊断（主子空间保持度、权重更新的秩与幅度）区分"复用预训练表示"与"重学新表示"；结果显示 EO 模型在当前微调设置下更新更大更高秩、保留预训练结构显著更少；主子空间保留好时可只调少量参数即追平全量微调 | 摘要未声明 | **7.0** | 提供"高光谱/EO 基础模型的预训练先验到底用没用上"的可量化评估视角，能直接用于你的 PEFT 对比实验 |
-| 8 | [Prototype-Rule Neurosymbolic Regularization for Rank-Constrained Tensor Neural Networks under Label Scarcity](https://arxiv.org/abs/2609.40131) | arXiv cs.LG / 2026-09-30 | 少样本高光谱分类 | Botswana / Indian Pines / Pavia University / Salinas；类支持预算 2–20 样本 | 为 Rank-R 张量学习引入可微原型-规则正则（推理端可选融合原型证据与 logits）；在**空间分离折**（缓解泄漏）下 Macro-F1 变化 +8.82（Botswana）/ +5.49（Indian Pines）/ +1.59（Pavia U）/ −0.62（Salinas），收益主要来自训练期正则 | 摘要未声明 | **6.5** | 少样本高光谱分类里少见的"空间分离折 + 支持预算曲线"严谨评测，方法简单易复现 |
-| 9 | [Adaptive Subspace Modeling With Functional Tucker Decomposition](https://arxiv.org/abs/2603.25530) | arXiv stat.ML / 2026-03-26 首发，**2026-09-25 更新** | 张量/子空间建模，跨域高光谱分类 | 高光谱影像 + 多变量时间序列 | 把连续模态建模为 RKHS 中的函数（无需预设基），保留 Tucker 多线性子空间结构；给出"一个域上估计的子空间复用到另一个域"的重建误差界，为子空间迁移提供理论依据 | 摘要未声明 | **6.5** | 为"跨区域/跨传感器复用光谱子空间"提供理论支撑，可解释你在跨域实验里观察到的增益 |
-| 10 | [Band-Selection Stability and Semantic Segmentation Performance: A Study on Hyperspectral City](https://arxiv.org/abs/2609.31074) | arXiv cs.CV / 2026-09-25，IEEE WHISPERS 2026 | 波段选择 + 高光谱语义分割 | Hyperspectral City V2（128 波段，450–950nm） | 6 种波段选择方法 × 10 组独立采样类均衡 ROI（60 个 top-25 子集）× 3 个分割模型；Top-K 在 K=9 时 mIoU 最高 +2.01、mF1 +1.72、CPU 推理快 18–22×，但性能随 K 非单调、稳定性与下游性能无一致关联 | 摘要未声明 | **6.0** | 给出"波段选择稳定性≠下游收益"的反面证据，对高效推理与波段精简方案是必要的风险提示 |
-| 11 | [Implicit Neural Representation for Hyperspectral Video Compression](https://arxiv.org/abs/2609.31435) | arXiv cs.CV / 2026-09-25，IEEE WHISPERS 2026 | 高光谱视频压缩 | 高光谱视频（HOT2026 等） | RGB 视频压缩模型的 INR 扩展：相对逐帧传统高光谱压缩 BD-PSNR +4.99 dB、BD-rate −88.88%；并评测下游跟踪（低数据量下 AUC 最高 +23.42%、距离精度 +35.56%） | 摘要未声明 | **6.0** | "压缩后仍评估下游任务"的范式值得迁移到高光谱超分/分类的数据与部署管线 |
-| 12 | [Aperture: Training-Free Multiscale Concept Bottlenecks for Remote Sensing](https://arxiv.org/abs/2609.38603) | arXiv cs.CV / 2026-09-29 | 可解释遥感识别（概念瓶颈） | 新数据集 SiFC（三国、人工审核类别概念图） | 免训练多尺度概念瓶颈：图像侧用贪心四叉树路由定位小目标概念，概念侧用预训练 MLLM 取代 CLIP 获取可靠概念分数，再融合全局与原生尺度概念分数；宏 F1 比最强免训练基线高 10 个百分点以上，并超过有监督概念瓶颈模型 | 摘要未声明 | **7.0** | 免训练 + 可解释 + 描述子更新无需重训，契合高光谱可交互解释与开放词汇应用路线 |
+| 1 | [Super-Resolving Unseen Hyperspectral Sensors at Any Scale via Spatial Operators](https://arxiv.org/abs/2609.39926)（OmniHSR） | arXiv cs.CV / 09-30（**续报**） | 高光谱超分（跨传感器、任意尺度） | HSI；ARAD 训练，6 个未见数据集测试 | 用**空间算子**替代逐波段卷积，0.538M 参数即在未见传感器上超过迁移基线，×2–×48 任意尺度 | 未声明（abs 页无仓库链接） | **9.2** | 直接命中跨传感器 + 任意尺度两大痛点，参数量比常规 SR 小 2–3 个数量级；**本期仍是高光谱超分最强的可复现起点** |
+| 2 | [Spectral Super-Resolution using Spatial-Spectral Residual Operator Networks](https://arxiv.org/abs/2609.35410)（SSRON） | arXiv cs.CV / 09-28（**续报**） | 光谱超分（RGB/MS → 连续光谱） | Sentinel-2 → EMIT；连续光谱场 | 残差算子网络回归**连续光谱场**而非离散波段值，支持零样本未见波段 | 未声明 | **8.8** | 与 OmniHSR 同源思路（算子 + 连续表示）但任务相反方向（空间→光谱），两篇合起来是「算子化 HSR」的完整拼图 |
+| 3 | [Correcting Spectra Outside the Backbone: A Model-Agnostic Rectifier for Hyperspectral Image Super-Resolution](https://arxiv.org/abs/2601.21338)（SR²-Net，v2） | arXiv cs.CV / 首次 01-29，**09-28 更新至 v2**（续报） | 高光谱超分（光谱保真度校正） | HSI 多数据集 + 5 种主干 | 0.048M 参数的**即插即用光谱校正器**，置于主干之外，消除 22.6% 残余光谱误差 | 未声明 | **7.8** | v2 = 新实验；思路（把光谱保真度从主干解耦）可零成本加到你自己主干的输出端，性价比极高 |
+| 4 | [HyperSAM: A Promptable Foundation Model for Hyperspectral Remote Sensing](https://arxiv.org/abs/2609.37340) | arXiv cs.CV / 09-29（**续报**） | 高光谱基础模型（可提示分割） | 合成高光谱立方体 → 真实 HSI（GRSM 接收） | 物理引导的丰度迁移合成全谱立方体 + **冻结 SAM3** 适配，主张合成数据优于扩大噪声监督 | 未声明 | **8.6** | 目前最完整的高光谱基础模型落地范式；其「合成 + 冻结 RGB 先验」配方可迁移到超分与解混 |
+| 5 | [HyperDAM: Hyperspectral Distractor-Aware Memory with Amodal Expansion for SAM 3 Tracking](https://arxiv.org/abs/2609.34396) | arXiv cs.CV / 09-28（**新**） | 高光谱视频目标跟踪 | HOTC 2026 高光谱视频 + 新标注 | ①HOTC2026-Modal 人工帧级模态掩码/框；②帧零标定的 HSI 门控拒绝光谱不一致的记忆更新；③因果时空扩展器做仅外扩的 amodal 修正 | 标注贡献为主，未声明代码 | **7.4** | 冻结 SAM 家族 + 光谱门控的接口设计可搬到高光谱变化检测/解混；私评 68.01% AUC 说明光谱线索在跟踪上确有增益 |
+| 6 | [Hyperspectral Image Models: Technical Report](https://arxiv.org/abs/2609.39871) | arXiv cs.CV / 09-30（**续报**） | 评测规范（分类等 24 场景） | 55 个模型 × 24 个高光谱场景 | 统一评测协议，含**带保护带的空间不重叠分块**，抑制空间泄漏；结论：场景难度主导，<1M 参数可追平大两个数量级的模型 | **开源**：[github.com/Tanishq251/Hyperspectral-Image-Models](https://github.com/Tanishq251/Hyperspectral-Image-Models)（已 HTTP 200 复核） | **8.5** | 本期唯一确认开源的高光谱基准；空间不重叠划分协议应直接替换你现有实验的随机划分 |
+| 7 | [Reuse or Relearn? A Spectral View of Earth Observation Foundation Models](https://arxiv.org/abs/2609.32756) | arXiv cs.LG / 09-26（**新**） | 基础模型适配诊断 | EO 基础模型 vs CLIP/DINO | 三项谱诊断量（主子空间保持度、更新分布广度、更新幅度）：EO 模型微调更新**更大、秩更高、保留预训练结构更少**；子空间被保留处，少量参数适配即追平全量微调 | 未声明 | **8.2** | 给出「该 PEFT 还是该重学」的可计算判据；把「微调到底学到了什么」变成可测量问题，是本周期最有方法论价值的一篇 |
+| 8 | [Implicit Neural Representation for Hyperspectral Video Compression](https://arxiv.org/abs/2609.31435) | arXiv cs.CV · **IEEE WHISPERS 2026** / 09-25（**新**） | 高光谱视频压缩 + 下游保持 | 高光谱视频（HOT2026） | 将 RGB 视频 INR 压缩扩展到高光谱，BD-PSNR +4.99 dB、BD-rate −88.88%；下游跟踪 AUC 最高 +23.42%、DP 最高 +35.56% | 未声明 | **7.2** | 首次把「压缩指标」和「下游任务指标」一起报告——为星上高光谱处理（与 NE-LoRA 同一条链路）提供压缩-精度权衡的评测范式 |
+| 9 | [Label Less, Learn More: Resource-Efficient Active Semi-Supervised Learning for Onboard Satellite Image Annotation](https://arxiv.org/abs/2609.37481)（SatLabel） | arXiv cs.CV / 09-25（**新**） | 主动 + 半监督（星上标注/适配） | 11 个遥感数据集（核心/扩展/未见域） | 在模型不确定性×类不平衡×伪标签质量之间闭环采样；可选 MoE 学生 + 图特征精修；学生 11.2M/42.8MB vs RemoteCLIP 151.3M/577MB，GFLOPs 3.65 vs 5.89，吞吐 ~2× | 未声明 | **7.6** | 以 RemoteCLIP 零样本为对照组、并做未见域迁移，协议规范；「小模型 + 主动采样打败零样本大模型」的路线对你做低标签高光谱分类可直接照搬 |
+| 10 | [Resource-Aware Parameter-Efficient Model Adaptation for Onboard High-Dimensional Data](https://arxiv.org/abs/2609.33687)（NE-LoRA） | arXiv cs.CV / 09-27（**续报**） | 星上 PEFT（高维光谱-空间输入） | 4 个高光谱数据集 × 3 种主干 | 低秩主分支 + **非线性辅助分支**双分支适配器 + 针对不同适配矩阵的非对称初始化/梯度差异化训练；以极小参数比例达到/超过全量微调 | 未声明 | **7.3** | 明确以 LEO 上行带宽为约束建模，是与第 8、7 条同一条「受限算力/受限带宽」链条；非线性分支可视为对标准 LoRA 的有效修正 |
+| 11 | [QSCP: Beyond Class-Name Prompts for Query-Guided Semantic Change Parsing](https://arxiv.org/abs/2609.33088) | arXiv cs.CV / 09-27（**新**） | 查询引导语义变化解析 / 指代变化检测 | SECOND、WHU-CDC | 支持类名、同义词与**带意图的句子**查询，解析为 intent + 语义槽，双向视觉证据组合 + 查询条件解码器，输出配对的双时相语义图（而不仅二值掩码） | **开源**：[github.com/qianyuancs/QSCP](https://github.com/qianyuancs/QSCP)（已 HTTP 200 复核） | **7.5** | 把「变化检测」升级为「按需检索变化 + 说出变成了什么」；句子级查询与跨数据集一致性的评测设计，是多时相学习与遥感 VLM 的结合点 |
+| 12 | [PolyTopoBench: A Benchmark for Complex Vector Polygon Generation from Remote Sensing Imagery](https://arxiv.org/abs/2609.32856) | arXiv cs.CV · **NeurIPS 2026（Evaluations & Datasets Track）** / 09-26（**新**） | 矢量多边形生成基准 | 2 个遥感数据集（建筑/道路/植被/裸地） | 统一评测框架，同时评外环与**内环**，横评 11 个方法（分割+后处理、视觉基础模型、专用矢量生成器）；现有方法在带洞/多环多边形上大幅退化 | **开源**：[github.com/seai-lab/PolyTopoBench](https://github.com/seai-lab/PolyTopoBench)（已 HTTP 200 复核） | **7.0** | 「光栅→矢量」比「类别 mIoU」更接近制图交付；拓扑感知是明确的未解问题，且基准已接收，投稿风险低 |
+
+**其他入选但不入榜（详见第 6 节排除说明）**：自适应子空间建模（Functional Tucker Decomposition，09-25 v2，跨域高光谱分类，理论性重建误差界）、TITAnD 高光谱轨迹图像（09-28 v3，任务非遥感）、原型-规则神经符号正则（09-30，上期已列）、波段选择稳定性 WHISPERS 2026（09-25，上期已列，见要点 5）。
 
 ---
 
-## 三、Top 3 精读
+## 3. Top 3 精读
 
-### 1. OmniHSR：把"超分"重写成算子场预测（9.0）
-- **核心问题**：现有任意尺度 HSR 方法一旦换传感器或超出训练尺度范围，就需要额外数据与算力才能维持质量——即"跨传感器泛化"与"任意尺度"不能同时成立。
-- **方法（来源事实）**：不预测光谱值，而预测**波段共享的空间算子**。Cross-Spectral Mapping (CSM) 把任意波段数的输入重采样到固定参考位置，用高斯支撑预测局部算子；Continuous Operator-Field Reconstruction (COFR) 把这些算子组合成连续场并作用到全部原始波段，从而支持任意尺度重建。
-- **证据（来源事实）**：仅用 ARAD 训练、0.538M 参数即可在 6 个未见数据集上超过直接迁移基线，且不需要目标域训练数据或适配；×2 到 ×48 共 12 个上采样倍率下，Pavia U 与 Chikusei 平均 PSNR 比最强基线高 0.55 dB；相对最强的"从零训练/目标域适配"基线仍占优，推理最高快 36×；算子预测在全部 7 个数据集上优于直接预测光谱值。
-- **局限（推断 + 可核查点）**：摘要未给出 SAM/ERGAS 等光谱保真度指标，"算子预测优于光谱值预测"是否同样带来光谱形状（SAM）优势需看论文；0.55 dB 的平均增益在部分倍率上可能不稳定；跨传感器评测集中在几个经典机载/星载数据集（Pavia U、Chikusei、ARAD），未覆盖 EnMAP/EMIT 等新传感器；代码尚未放出（摘要称"即将公开"）。
-- **可延伸**：把算子场输出接到光谱保真整流器（SR²-Net 式 MCR）或直接以下游分类为监督；把"波段共享算子"思想用于跨传感器波段对齐（S2 ↔ EMIT ↔ EnMAP）；测试算子场在跨区域（不同大陆）时的稳定性。
+### 3.1 Reuse or Relearn? A Spectral View of Earth Observation Foundation Models（09-26，新）
 
-### 2. HyperSAM：合成高光谱 + 冻结 RGB 基础模型的提示式范式（8.5）
-- **核心问题**：高光谱缺少"高空间分辨率 + 可靠稠密标注"的大规模语料；同时大量高光谱模型几乎从头训练，浪费了现代视觉基础模型学到的几何与交互先验。
-- **方法（来源事实）**：数据侧用物理引导的**丰度迁移生成器**从 SpaceNet 高分辨率多光谱合成全谱高光谱立方体，并用 SAM3 派生伪掩膜提供目标级监督；模型侧为冻结 SAM3 RGB 分支 + 由 RGB ViT 初始化的可训练高光谱侧编码器 + ControlNet 式零初始化特征注入 + 轻量 MoE mask 精修，配合 CromSS 式置信度选择应对噪声伪标签。
-- **证据（来源事实）**：在分类、异常检测、变化检测、目标检测及机载溢油制图等多任务上报告强泛化；作者报告"高质量合成高光谱数据比单纯扩大噪声高光谱监督更有效"。已被 IEEE GRSM 接收。
-- **局限**：期刊接收不代表全部细节可复现；摘要未给代码/数据链接，合成管线依赖 SpaceNet 与 SAM3 的可得性与许可；跨传感器泛化证据以任务泛化为主，未见明确的 leave-one-sensor-out 协议。
-- **可延伸**：把合成数据管线用于**高光谱超分训练集扩充**（合成低分辨率-高分辨率谱对）；用 HyperSAM 的分割掩膜为超分提供区域级注意力；在其上验证 NE-LoRA/PEFT 的少样本适配。
+- **核心问题**：下游精度无法回答「微调之后，模型是在**复用**预训练表示，还是**重新学**了一套？」——而这恰恰决定了一个 EO 基础模型是否值得在星上反复适配。
+- **方法**：对适配前后的权重做谱诊断，量化三件事：(a) 主导奇异子空间的保持程度；(b) 权重更新分布的广度（有效秩）；(c) 更新幅度。以 CLIP / DINO 等自然图像模型为参照系。
+- **证据（来源事实）**：在所评测的微调设置下，**EO 模型的更新幅度更大、秩更高、预训练结构保留更少**；且诊断量对「适配成本」有预测力——预训练子空间被保留的地方，只调一小部分参数就能追平全量微调，没保留的地方就落后。
+- **局限**：摘要未给出具体数据集/模型清单与各诊断量的阈值，不能据此断言某个具体 EO 模型「不可复用」；诊断量本身是相关性的，未建立与下游收益的因果曲线。
+- **可延伸**：① 把诊断量当作**多光谱/高光谱适配策略的路由器**（子空间保持度低 → 上 NE-LoRA 的非线性分支或重学光谱编码器）；② 「子空间保持度 → 达到全量微调精度所需参数比例」这条曲线可用高光谱超分/分类任务独立复现，是一条低算力、可独立成文的实验线；③ 对高光谱基础模型（HyperSAM 一类）重跑同一诊断，检验「合成数据预训练」是否比自然图像预训练更耐微调。
 
-### 3. Hyperspectral Image Models：把"评测"本身当作贡献（8.5）
-- **核心问题**：高光谱深度学习横跨光谱-空间 CNN、ViT、Mamba、图网络、KAN、自监督掩码自编码，但仓库碎片化、张量约定互不兼容、评测不标准，导致精度常常被"窗口重叠"抬高。
-- **方法（来源事实）**：统一注册表 + 自动 4D/5D 张量适配 + 标准化构造器，整合 55 个代表性模型（6 大范式）、24 个基准场景（机载、星载、UAV、火星 CRISM），支持缓存、标签重映射、PCA、显式波段选择或原始光谱、可选空间最大池化与任意 P×P 图块提取；提供类别均衡随机划分与带 Chebyshev 保护带的**空间不重叠区域分块**；单一 `config.yaml` + 确定种子 + 完整溯源，自动产出 LaTeX 基准表与分类图。
-- **证据（来源事实）**：1320 组"模型×场景"评估、6600 次种子运行；平均精度从 Botswana 的 96.40% 到 Houston 2018 的 56.70%；场景难度主导，范式间均值仅差约 15 分；没有范式普遍占优；<1M 参数模型可匹配大两个数量级的架构。代码已在 GitHub 公开（本期已 HTTP 复核为 200）。
-- **局限**：以分类任务为主，未覆盖超分/解混/检测；结论基于该库内的模型与配置选择，摘要中的"15 分差距"是范式均值，不能外推为"架构不重要"；对超大模型只做了有限采样。
-- **可延伸**：直接采用其"空间不重叠分块"协议重跑你的 HSI 分类实验，量化重叠窗口带来的虚高；把该库当作 HSI-SR 的**下游评测器**（超分后分类精度）；用其配置网格做 PEFT 与神经符号正则的横向对比。
+### 3.2 HyperDAM: Hyperspectral Distractor-Aware Memory with Amodal Expansion for SAM 3 Tracking（09-28，新）
 
-### 补充精读：高光谱超分的光谱保真线（SSRON 8.5 / SR²-Net 8.0）
-- **SSRON**（[2609.35410](https://arxiv.org/abs/2609.35410)）把 MSI→HSI 光谱超分视为算子学习：DeepONet 学"降采样光谱 → 连续光谱"的映射，训练中未见波段可零样本预测，连续输出可外推到比传感器原生更细的波长间隔；训练对为 Sentinel-2A 类多光谱 → EMIT 高光谱，这对"用免费高频多光谱生成高光谱产品"的路线是关键证据（**注意**：EMIT 为星载成像光谱仪，非 SAR，符合本雷达范围）。
-- **SR²-Net**（[2601.21338](https://arxiv.org/abs/2601.21338)，2026-09-28 更新）主张"光谱的低维结构属于数据、不属于主干"：一个整流器设计可服务任意主干，只吃主干输出、不改其内部，平均消除 22.6% 残余光谱误差、仅 0.048M 参数。
-- **组合假设（本文推断）**：OmniHSR 负责尺度与传感器泛化，SSRON 提供连续光谱表示，SR²-Net 提供光谱形状约束——三者在"跨传感器 + 任意尺度 + 光谱保真"上互补，尚未有人报告联合方案。
+- **核心问题**：高光谱视频提供**材质线索**（可区分伪彩外观相似的干扰目标），但现有基础模型跟踪器主要用空间与外观证据更新记忆——光谱信息没有被接进 foundation-model tracker 的状态更新里。
+- **方法**：基于 DAM4SAM3 三个组件——(1) **HOTC2026-Modal**：给 HOTC 2026 全部 481 段视频补人工核验的帧级模态掩码与紧贴框；(2) **帧零标定的 HSI 门控**：拒绝光谱不一致的记忆更新，且不改变当前帧预测（拒更新 ≠ 改预测，这个解耦设计很干净）；(3) **因果时空扩展器**：在冻结 SAM 特征上做仅向外扩的 amodal 修正；另配静态场景恢复与空掩码 RTS 平滑处理目标切换/全遮挡。
+- **证据（来源事实）**：HOTC 2026 组织方私有评测中排名第 2，AUC 68.0093%、DP@20 87.7703%；模型选择显式以跨域鲁棒性优先于榜单特化。
+- **局限**：无代码/权重声明；方法高度围绕竞赛榜单工程化（作者自述以跨域鲁棒性优先，但未报告消融数值）；「门控拒更新」的阈值来自帧零标定，对光谱漂移（不同传感器/光照）的敏感性未知；模态标注数据集是否公开未说明。
+- **可延伸**：① 「门控式记忆更新」可迁移到**多时相变化检测**的记忆/时序融合模块——用光谱一致性拒绝对应未发生变化的伪更新；② 帧零标定思想可用于跨传感器高光谱超分中的**逐景自适应**（只在一帧/一小块上标定，其余零样本）；③ 把 HOTC2026-Modal 作为高光谱视频理解的下游评测场，替代常见的单帧分类。
 
----
+### 3.3 高光谱超分主线续报：OmniHSR + SSRON + SR²-Net v2（09-28 ～ 09-30）
 
-## 四、三个可做的选题
-
-### 选题 1：算子场高光谱超分 + 光谱保真约束的联合重建（跨传感器 / 任意尺度）
-- **Problem**：现有 HSR 要么用光谱值回归（跨传感器差），要么只优化 PSNR/SSIM（光谱形状漂移，损害下游定量分析），且跨传感器与任意尺度不能兼得。
-- **Hypothesis**：在波段共享算子场（OmniHSR 式）之上加入"紧致光谱子空间约束 + 退化一致性"（SR²-Net 式 MCR），可在不牺牲空间指标的前提下显著降低 SAM/ERGAS，并提升跨传感器零样本迁移的下游分类精度。
-- **Method sketch**：CSM 重采样 → 局部算子预测 → 连续算子场重建；重建后接一个轻量整流头（分层光谱-空间注意力 + 子空间投影校正 + 低分辨率一致性损失）；训练目标 = 空间 L1/感知损失 + 光谱角 + 退化一致性；评测分两轨：合成下采样（可控）与真实跨传感器（ARAD 训练、Pavia/Chikusei/EMIT 测试）。
-- **数据与指标**：ARAD、Pavia University、Chikusei、Indian Pines、Botswana、Houston 2013、EMIT/EnMAP（若可得）；指标 PSNR/SSIM + SAM/ERGAS + 下游 OA/AA/kappa/Macro-F1，另有参数量与推理时延。
-- **Baselines**：OmniHSR、SSRON、SR²-Net、CNN/Transformer/扩散三类 HSR 主干、双三次插值。
-- **第一个最小可证伪实验**：只用 ARAD 训练，在 Pavia U 上取一个**超出训练范围的尺度**（如 ×24），比较"纯算子场"与"算子场 + 整流头"的 SAM 与分类 OA；若 SAM 无改善或分类精度下降，假设即被否证。
-- **Risk**：EMIT/EnMAP 下载与配准成本高；跨传感器波段不重叠会削弱零样本；0.55 dB 级别的空间增益可能被整流头抵消；算子场训练不稳定（高斯支撑尺度是敏感超参）。
-
-### 选题 2：传感器无关的连续光谱超分与不确定性估计（S2 → EMIT/EnMAP）
-- **Problem**：光谱超分本质不适定，多解性未被量化；现有方法给出点估计，无法告诉下游用户哪些波段/像元的预测可信。
-- **Hypothesis**：在连续光谱算子学习框架上引入"波段级不确定性（预测区间/分位数）"，其区间宽度与真实误差强相关，且可用于**零样本未见波段**时的可靠度筛选；据不确定性加权能把下游（如作物分类）精度提升到与全监督相当。
-- **Method sketch**：SSRON 式连续输出 + 多假设/分位数回归或轻量扩散先验；用真实传感器光谱（EMIT/EnMAP）校准；引入波长条件嵌入以支持任意查询波长；下游用不确定性阈值过滤低置信像元再分类。
-- **数据与指标**：Sentinel-2 → EMIT 训练对；EnMAP / PRISMA 作未见传感器零样本测试；指标为逐波段 RMSE、SAM、连续区间的校准误差（ECE/覆盖率）、下游分类 OA 与选择性预测曲线（risk-coverage）。
-- **Baselines**：SSRON、其他 MSI→HSI 光谱超分方法、直接波段插值 + 线性光谱解混。
-- **第一个最小可证伪实验**：在 S2→EMIT 上训练，仅用 EnMAP 一个场景测试"未见传感器"的逐波段误差与校准误差；若区间覆盖率严重偏离标称值，假设被否证。
-- **Risk**：跨传感器光谱响应函数与点扩散函数差异会造成系统偏差（需先做 S2/EMIT/EnMAP 的波段对齐）；不确定性建模会提高训练复杂度；真实高光谱数据获取与配对最难。
-
-### 选题 3：高光谱基础模型的可复用性诊断 + 空间不重叠协议下的少样本适配
-- **Problem**：高光谱/EO 基础模型微调后的收益，无法区分"复用了预训练先验"还是"重学了新表示"；同时社区广泛存在的重叠窗口划分让少样本结论不可比。
-- **Hypothesis**：用谱诊断（主子空间保持度、更新秩/幅度）+ 空间不重叠划分，可预测 PEFT（LoRA/NE-LoRA）在哪些场景能追平全量微调；把"主子空间保留度"作为选择适配策略的可操作指标。
-- **Method sketch**：取 Hyperspectral Image Models 库中的标准模型与 24 个场景；对每场景在"类别均衡随机划分"与"带保护带的空间不重叠分块"下各跑 full-FT / LoRA / NE-LoRA / 神经符号原型正则；同时计算适配前后的谱诊断曲线；分析(诊断指标 → 精度差)的相关性，并按支持样本预算 2–20 扫描。
-- **数据与指标**：库内 24 场景（Botswana、Indian Pines、Pavia U、Houston 2018 等）；指标 OA/AA/kappa/Macro-F1 + 可训练参数比例 + 主子空间保留度 + 两种划分下的精度差。
-- **Baselines**：全量微调、LoRA、HyperSAM 零样本/少样本、原型-规则正则（2609.40131）。
-- **第一个最小可证伪实验**：选 2 个场景 × 1 个主干，比较"随机划分"与"空间不重叠划分"的精度落差，并测量 LoRA 与全量微调差距是否随"主子空间保留度"单调变化；若两者无相关性，假设被否证。
-- **Risk**：算力开销（该库规模为千级模型-场景评估，需裁剪子集）；部分模型/权重未放出导致子集偏差；谱诊断指标本身需要论证其与任务精度的因果性；新意可能被"又一个基准研究"质疑，需要用诊断-适配的预测能力来立住贡献。
+- **核心问题**：超分要在**未见传感器、未见波段、任意尺度**上成立，而不是在固定传感器固定倍率的 benchmark 上刷分。
+- **本期状态（来源事实）**：窗口内没有新的高光谱超分投稿；三篇已在榜的工作提供的是三种互补的「去传感器依赖」手法——
+  - **OmniHSR**（09-30）：把逐波段卷积换成**空间算子**，0.538M 参数、仅用 ARAD 训练即在 6 个未见数据集上超过迁移基线，×2–×48 任意尺度；
+  - **SSRON**（09-28）：残差算子网络回归**连续光谱场**，S2→EMIT 零样本未见波段；
+  - **SR²-Net v2**（09-28 更新）：主干之外的 0.048M 参数光谱校正器，5 种主干通用，削减 22.6% 残余光谱误差。
+- **证据**：均为作者自报的跨数据集结果，**三篇都未声明代码/权重**——这是本主线目前最大的可复现性缺口（与第 6 条基准的开源形成反差）。
+- **局限（推断）**：ARAD 的退化仿真是否覆盖真实传感器 PSF/配准误差，摘要不足以判断；未见传感器评测仍以 PSNR/SAM 为主，缺少「跨传感器 + 下游分类」的联合验证；三篇对任意尺度的尺度因子集合不统一，横向比较需自建统一协议。
+- **可延伸**：① 用 Hyperspectral Image Models 的空间不重叠协议 + 统一尺度集合，做 OmniHSR/SSRON/SR²-Net 的**首个独立横向复现**（本身即是可发表的工作量）；② 把 OmniHSR 的空间算子与 SSRON 的连续光谱场合并成「算子 + 连续波长条件」的单模型；③ 用 Reuse-or-Relearn 的谱诊断分析：跨传感器超分微调到底改动了哪些子空间（预期：光谱解码比空间主干改动更大）。
 
 ---
 
-## 五、下一步阅读队列
+## 4. 三个可做的选题
 
-1. **Hyperspectral Image Models**（先读其 GitHub 的划分协议与 `config.yaml`）：决定你后续实验的评测规范。[代码](https://github.com/Tanishq251/Hyperspectral-Image-Models) / [论文](https://arxiv.org/abs/2609.39871)
-2. **OmniHSR**（等代码放出）：复现 0.538M 参数、跨传感器任意尺度的基线。[论文](https://arxiv.org/abs/2609.39926)
-3. **HyperSAM**：合成高光谱管线与 SAM3 注入方式的实现细节。[论文](https://arxiv.org/abs/2609.37340)
-4. **SSRON**：连续光谱算子学习的损失设计与 EMIT 配对细节。[论文](https://arxiv.org/abs/2609.35410)
-5. **SR²-Net**：MCR 子空间约束与退化一致性约束的形式，作为即插即用模块。[论文](https://arxiv.org/abs/2601.21338)
-6. **NE-LoRA**：星上 PEFT 的双分支与多矩阵训练策略。[论文](https://arxiv.org/abs/2609.33687)
-7. **Reuse or Relearn?**：谱诊断的具体度量（子空间保持、更新秩）如何计算。[论文](https://arxiv.org/abs/2609.32756)
-8. **Prototype-Rule 神经符号正则**：空间分离折与支持预算实验设计。[论文](https://arxiv.org/abs/2609.40131)
-9. 交叉参考（非高光谱主线的 RS/CV 前沿）：[PolyTopoBench](https://arxiv.org/abs/2609.32856)（NeurIPS 2026 D&B，矢量多边形/拓扑评测）、[SatNav](https://arxiv.org/abs/2609.31507)（NeurIPS 2026 D&B，卫星影像长时程 VLN）、[HyperDAM](https://arxiv.org/abs/2609.34396)（SAM3 + 高光谱记忆，HOTC 2026 第二名）、[QSCP](https://arxiv.org/abs/2609.33088)（查询式语义变化解析）、[Cropland PAtteRNS](https://arxiv.org/abs/2609.38165)（时空谱三因子分解注意力，代码开源）。
+### 选题 A：波长条件化的算子超分（Wavelength-Conditioned Operator SR）
+- **Problem**：现有 HSR 要么绑定固定传感器/波段（迁移到未见传感器即崩），要么固定倍率；算子/连续场方法各自只解决一半（OmniHSR 管空间尺度，SSRON 管光谱轴）。
+- **Hypothesis**：把「退化算子」与「波长条件」显式作为输入，单一模型可在未见传感器上同时获得任意空间尺度与任意波段输出，且零样本 SAM 误差显著低于分别迁移的两条基线。
+- **Method sketch**：主干沿用空间算子的隐式核参数化（把卷积核作为坐标/波长的函数）；输入为 (LR 立方体, 目标波段中心波长向量, 空间尺度因子, 传感器响应函数估计)；训练用 ARAD 的多传感器仿真 + 波段随机遮罩，损失 = L1(重建) + 光谱角 + 算子正则。
+- **数据与指标**：训练 ARAD；测试 Chikusei / Pavia / Houston / EMIT / Hyperion（跨传感器）；指标 PSNR、SAM、ERGAS、跨传感器 zero-shot SAM、尺度外推（训练 ×8 测 ×2/×48）+ 下游分类 OA。
+- **Baselines**：OmniHSR、SSRON、SR²-Net + 通用 SR（SwinIR）、经典融合（CNMF/HySure）、逐传感器微调（上界）。
+- **第一个最小可证伪实验**：ARAD 训练 → Chikusei 直接测试，仅改变波长条件向量；若 SAM 不优于 OmniHSR 复现基线，则「波长条件显式建模」假设被证伪。
+- **Risk**：三篇基线无代码 → 需自实现，工作量与偏差风险高；传感器响应函数真实值难获取；跨传感器测试集的地面真值配准质量会污染指标。
+
+### 选题 B：EO 基础模型的「可复用性」诊断用于高光谱适配策略选择
+- **Problem**：星上/低算力场景下，无法靠试错决定「用 PEFT 还是重学光谱编码器」；Reuse-or-Relearn 只诊断了自然图像式 EO 模型，未覆盖高光谱与超分任务。
+- **Hypothesis**：谱诊断量（子空间保持度、更新秩、更新幅度）能预测「达到全量微调精度所需的参数比例」，从而在训练前选出适配策略。
+- **Method sketch**：对 3–5 个高光谱基础模型/预训练主干，在 {分类, 超分, 解混} 三类下游上分别做全量微调、LoRA、NE-LoRA 式双分支；记录诊断量与「参数-精度」曲线；拟合诊断量→最小参数比例的映射，并在留出任务上验证。
+- **数据与指标**：Indian Pines / Pavia / Salinas / Botswana（分类，用空间分离折防泄漏）、Chikusei 或 ARAD（超分）、公开解混数据；指标 OA/Macro-F1、PSNR/SAM、达到全量微调精度所需可训练参数比例、GPU 吞吐。
+- **Baselines**：全量微调、LoRA、NE-LoRA、只调 head、线性探测（frozen）。
+- **第一个最小可证伪实验**：在 Indian Pines + Pavia 两个任务上计算子空间保持度，与「LoRA 达到全量微调精度所需 rank/参数比例」求相关；若 Spearman ρ < ~0.5，假设不成立。
+- **Risk**：诊断量的实现细节（如何定义「主导子空间」）需自行设定，可比性存疑；高光谱数据规模小，微调差异可能被划分噪声掩盖（需多折重复，参考本期选带稳定性结论）；算力需求集中在多组全量微调上。
+
+### 选题 C：压缩感知域内的高光谱时序下游推理（compress-and-infer）
+- **Problem**：星上高光谱视频/时序受下行带宽限制，现行做法是先压缩、下行、解码、再推理；压缩误差与下游任务误差之间缺少可控的联合优化，且「解码」本身是可省的一步。
+- **Hypothesis**：在 INR（隐式神经表示）域内直接接轻量下游头，可在同等比特率下同时取得更好的重建与更高的下游精度，且比特率–下游精度曲线优于 JP2K/PCA 基线。
+- **Method sketch**：以 INR 表示高光谱时序（时间轴与光谱轴连续化），在表示上接小型 head 做变化检测/跟踪；训练目标 = 重建损失 + 下游损失（可加比特率约束的拉格朗日项）；对比「先解码再推理」的流水线。
+- **数据与指标**：HOT2026 / HOTC 2026 高光谱视频（复用 HyperDAM 论文的下游跟踪指标）、多时相高光谱变化检测数据；指标 BD-rate、BD-PSNR、下游 AUC / DP@20 / F1，以及比特率–精度曲线下的面积。
+- **Baselines**：JPEG2000 + PCA 逐帧压缩、RGB 视频 INR 扩展（INR 论文复现）、先解码后推理的独立 head。
+- **第一个最小可证伪实验**：取 5 段 HOT2026 序列，在固定比特率下比较「INR 域内推理」与「解码后推理」的跟踪 AUC；若无优势，则联合优化假设被证伪。
+- **Risk**：数据集获取与许可（HOTC/HOT 系列多为竞赛数据）；INR 训练成本高于传统编解码；「下游 head 在表示域内」可能只是变相过拟合到特定任务，需跨任务验证。
 
 ---
 
-## 六、排除说明与来源说明
+## 5. 下一步阅读队列
+
+1. [Reuse or Relearn? A Spectral View of EO Foundation Models](https://arxiv.org/abs/2609.32756) — 先看诊断量的定义与实现细节，判断能否直接复用。
+2. [Super-Resolving Unseen Hyperspectral Sensors at Any Scale via Spatial Operators](https://arxiv.org/abs/2609.39926) + [SSRON](https://arxiv.org/abs/2609.35410) — 精读算子参数化与连续光谱场回归，评估合并成单选题目 A 的可行性。
+3. [Hyperspectral Image Models: Technical Report](https://arxiv.org/abs/2609.39871) — 抄它的空间不重叠分块协议，替换现有实验划分。
+4. [HyperDAM](https://arxiv.org/abs/2609.34396) + [INR for Hyperspectral Video Compression](https://arxiv.org/abs/2609.31435) — 高光谱视频这条新线的两个入口。
+5. [PolyTopoBench](https://arxiv.org/abs/2609.32856)（NeurIPS 2026 D&B）— 看复杂多边形上 11 个方法的失效模式表，找可迁移的拓扑感知损失。
+6. [QSCP](https://arxiv.org/abs/2609.33088) — 看句子级查询如何解析为语义槽，判断能否迁移到高光谱语义变化解析。
+7. [Band-Selection Stability ... Hyperspectral City](https://arxiv.org/abs/2609.31074)（WHISPERS 2026）— 报告实验时如何做重复采样方差，避免单次划分结论。
+
+---
+
+## 6. 排除说明与来源说明
 
 **被排除的高分候选（及原因）**
-- [2609.39730] *Phase-resolved wide-field CARS microscopy with speckle illumination*（physics.optics）：光谱硬件/显微成像，无 ML 或地理空间角度，按规则排除（关键词含 speckle）。
-- [2609.37281] *Scanless quantum Fourier-transform mid-infrared spectroscopy*（physics.optics）：纯仪器与光谱测量，无 ML/地理空间角度。
-- [2609.34954] *Toward Enhanced Water Detection in SWOT Pixel Clouds using Dynamic Graph Neural Networks*（physics.geo-ph）：SWOT 为 Ka 波段雷达高度计，属雷达/微波范畴，按默认排除规则排除（其图神经网络方法本身与 SAR 强绑定）。
-- 名称含 "hyperspectral" 但与光谱影像无关：[2603.25255] *Hyperspectral Trajectory Image*（轨迹图像通道表征，非高光谱遥感数据）、[2609.39083] MRI 超分、[2609.37850]/[2609.37831] 视频超分、[2609.33582] Fill2SR 等通用/医学超分工作：不属于光学遥感或对地观测，未纳入榜单。
-- 本期候选池共 48 条窗口内更新/新投稿、其中遥感相关 23 条、高光谱相关 14 条；榜单只保留 12 条，其余（如 *USAI-Quant* 定量推理基准、*Region-Local Copula* 变化检测、*Label Less, Learn More* 星上主动半监督、*Dual-Track Sentinel-2 小麦面积*）作为背景阅读未入榜。
 
-**来源说明（如实声明）**
-- 实际使用的来源：arXiv API（Atom XML），26 次查询分四轮执行（关键词轮 + 日期受限轮 + 扩展轮 + 字段对比轮），请求间隔 ≥3.5 秒；论文标题与投稿日期用 `arxiv.org/abs/<id>` 页面复核；开源声明用 HTTP 状态码复核（Hyperspectral-Image-Models、PolyTopoBench、QSCP、CroplandPAtteRNS 均返回 200）。
-- 未使用的来源：Papers with Code、Hugging Face、GitHub 趋势、会议/工作坊日程、排行榜页面（本次未检索，故报告不对这些来源作任何断言）。
-- **已知检索局限**：arXiv 日期受限检索显示本窗口内标题/摘要含 "hyperspectral" 的新投稿仅 13 篇、其中 8 篇为标题含该词——高光谱本身是小众方向，本期"高光谱超分"真正的新投稿只有 2 篇（OmniHSR、SSRON），另有 1 篇更新（SR²-Net）。若有论文使用了非标准术语（如仅在正文提 HSI-SR），可能未被捕获。
-- 报告中的"来源事实"均来自摘要、comment 或已验证的页面；标注为"推断/假设"的内容为本文分析，未经原文实验确认。
+| 候选 | 日期 | 排除原因 |
+|---|---|---|
+| [Phase-resolved wide-field CARS microscopy with speckle illumination](https://arxiv.org/abs/2609.39730) | 09-30 | 纯光谱成像仪器/显微光学（physics.optics），无机器学习或地理空间角度 |
+| [Scanless quantum Fourier-transform mid-infrared spectroscopy for solids and surface analysis](https://arxiv.org/abs/2609.37281) | 09-29 | 纯光谱硬件/量子计量（physics.optics, quant-ph），同上 |
+| [Region-Local Copula Evidence Fusion for Heterogeneous Remote Sensing Change Detection](https://arxiv.org/abs/2609.32716) | 09-26 | 实验数据集为 Lake / UK（典型 SAR 变化检测基准），属 SAR / 异源跨模态变化检测，按默认规则排除；其「区域-局部依赖证据融合」的统计表述有一定跨模态可迁移性，若后续明确做光学-多光谱版本可重新入选（低优先级） |
+
+**其他说明**：原型-规则神经符号正则（09-30）、波段选择稳定性（09-25）、NE-LoRA（09-27）、HyperSAM（09-29）、Hyperspectral Image Models（09-30）、OmniHSR（09-30）、SSRON（09-28）、SR²-Net（09-28 v2）在上期（10-01）已报道，本期按「不重复报道」原则不作新条目展开，仅标注续报状态与新增信息（OmniHSR/SSRON/SR²-Net 见 3.3，其余见要点）。**Functional Tucker Decomposition**（09-25 v2）与 **TITAnD 高光谱轨迹图像**（09-28 v3）列在备注：前者为张量函数分解理论 + 跨域高光谱分类，理论与用户方向相关但无代码、以重建误差界为主；后者「Highspectral Trajectory Image」是命名借用（日×时刻双循环网格），实际任务为 GPS 轨迹异常检测，非遥感高光谱，只作为趋势信号记录。
+
+**本次实际使用的来源与局限（如实声明）**
+
+- 已完成：arXiv API 三次抓取（sweep A 12 次查询含日期受限查询、sweep B 8 次无界查询 max_results 200–300、sweep C 8 次无界查询），去重 1,963 条记录；`arxiv.org/abs/<id>` 复核 17 篇（标题与日期 17/17 一致）；2 个 GitHub 仓库 HTTP 200。召回核对：无界的 `all:"hyperspectral"` 300 条记录覆盖 2026-01-18 ～ 2026-09-30，说明窗口内无遗漏。
+- **未完成**：第四次针对不含 "hyperspectral" 字样的高光谱超分表述（如 `all:"multispectral" AND all:"hyperspectral"`、`all:"super-resolution" AND all:"multispectral"`）的补充抓取，被 arXiv 返回 **HTTP 429 / 503 限流**，多次重试（含 30 s 退避）均失败。因此**可能存在少量以 "multispectral/Sentinel-2" 表述、未含 hyperspectral 关键词的融合/超分新投稿未被覆盖**，下期优先补齐。
+- **未检索**：Papers with Code、Hugging Face、CVPR/NeurIPS/WHISPERS 等会议日程页、EvalAI/Codalab 竞赛页；故本报告不对这些来源的活动作任何断言。
+- **事实与推断的区分**：第 2 节表格中的「日期 / 任务 / 数据 / 贡献 / 开源状态」均来自 arXiv 官方元数据与摘要原文（来源事实）；标注「**（推断）**」处为基于本期多篇工作的趋势判断，非原文结论。评分是主观综合排序，不代表质量绝对量级。
