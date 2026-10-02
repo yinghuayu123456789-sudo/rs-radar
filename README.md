@@ -1,151 +1,205 @@
-# 遥感研究雷达日报 · 2026-10-02（CVPR 2026 首次纳入版）
+# 遥感研究雷达日报 · 2026-10-02（关键词策略验收运行 B）
 
-**本期来源与时间窗口**：arXiv API（16 次查询，`sortBy=submittedDate`，去重 902 篇）+ CVF 会议开放获取库（本地缓存 `CVPR2026_index.json`，4,042 条论文条目）｜arXiv 请求窗口 2026-09-25 ~ 2026-10-02，**实际有效窗口 2026-09-25 ~ 2026-09-30**（arXiv 公告延迟：16 次查询中日期最新的高光谱论文为 09-30，跨月投稿尚未进入索引）｜生成日期：2026-10-02｜排除项默认剔除 SAR/雷达/微波与纯光谱仪器。
+**本期来源与时间窗口**：arXiv API（20 次查询，**20/20 HTTP 200**，去重 708 篇；有效窗口 2026-09-25 → 2026-09-30）+ CVF 会议库（本地索引 CVPR2026，4,042 条 → 按现行策略命中 3 条）。
+**生成日期**：2026-10-02 10:52 CST（同日第二次运行，验收新关键词策略的筛选准确性）。
+**筛选脚本**：`radar_filter.py`（策略唯一真相源 `search_keywords.txt`，由 `radar_keywords.py` 解释执行）。
 
-> 说明：本期与同日早间一次运行窗口重叠，此前已报道的条目在「来源/会议」列标 **（续报）**，正文只补齐新证据与研究取向；新增价值集中在 **CVPR 2026 会议侧**（首次纳入）与 3 篇 arXiv 新增（HyperSAM / NE-LoRA / 原型-规则张量正则）。
+---
 
-## 1. 本期要点（Executive summary）
+## 本期要点
 
-- **CVPR 2026 首次进入雷达，高光谱超分/光谱重建是会议里的一整块**：本地 CVF 索引 4,042 条论文中筛出 25 条高光谱/多光谱相关（core 级），本期**会议新进榜 15 篇**，其中 **6 篇直接是高光谱超分、光谱超分或全色锐化**（EMR-Diff、Unregistered HSI SR、Adversarial Unfolding、ScaleFormer/PanScale、Diffusion Neural Operator、RWKV Pan-sharpening）。（来源事实）
-- **超分主线在会议侧呈现「同题异构」**：同一任务（低分辨率高光谱 → 高分辨率高光谱）分别从**生成式先验**（EMR-Diff 的边缘感知噪声扩散）、**解混-配准耦合**（UAFL 的丰度空间 + 可变形聚合）、**物理先验 + 对抗展开**（UALNet 的 PriorNet + unfolding adversarial）三条路径攻。（来源事实；「三线并进」的判断属**推断**）
-- **arXiv 侧本周新增少而集中**：有效窗口内新增 15 篇、更新 5 篇，高光谱相关只有 9 篇；高光谱超分没有第二波投稿，新意主要来自**基础模型适配**——可提示基础模型 HyperSAM（SAM3 冻结 RGB 分支 + 高光谱侧编码器）、星上参数高效适配 NE-LoRA（带宽约束下在线更新），与 Reuse or Relearn 的谱诊断合成同一条主线：**新传感器适配要花多少参数**。（来源事实 + 推断）
-- **评测规范化继续且有代码落地**：`Hyperspectral Image Models` 技术报告统一 55 个模型 / 6 大范式 / 24 个基准场景（机载、星载、UAV、火星 CRISM）、1,320 次模型-场景评测与 6,600 次带种子运行，并用 **Chebyshev guard band 的空间不相交划分**消除训练-测试像素重叠；结论是**场景难度差异 > 架构范式差异**（范式均值只差约 15 个百分点，Botswana 96.40% vs Houston 2018 56.70%）。（来源事实）
-- **跨传感器泛化成为超分论文的共同验收条件**：OmniHSR（只训 ARAD，6 个未见数据集零适配迁移）、UALNet（Sentinel-2 → AVIRIS-NG，12→186 波段）、UAFL（未配准参考图）都在避免「同传感器同尺度」的温室评测。（来源事实 + 推断）
+1. **验收结论先说**：候选 **16 篇 → 入选 2 篇**。新策略（标题必须同时出现 `hyperspectral/HSI` 门禁 + A/B/C 任务词）在本期窗口上是**高精度、低召回**：唯一可证的漏检是 `2609.39926`（摘要正文明确写 "hyperspectral super-resolution"，只因标题用了 `Super-Resolving` 这一词形而落选）。详见「验收发现」。
+2. **'任意尺度 + 跨传感器' 是本期 arXiv 超分主线**：SSRON（`2609.35410`）把光谱超分建成深度算子网络，学"降采样光谱 → 连续光谱"的函数到函数映射；OmniHSR（`2609.39926`）更进一步，**直接预测波段共享的空间算子而不是光谱值**，只用 0.538M 参数在 ARAD 上训练即可零样本迁移到 6 个未见数据集。两者相隔 2 天、观点互为镜像（镜像关系为推断，非原文陈述）。
+3. **"骨干无关"开始被当成一等公民问题**：SR²-Net（`2601.21338`）明确主张**光谱的低维结构属于数据、不属于任何骨干**，因此一个整流器可服务任意骨干；这与 CVPR 侧 UALNet 的"数据驱动光谱正则"同一思路（两位作者组的独立工作，非同一篇）。
+4. **会议侧本期只有高光谱超分**：CVPR2026 索引按策略仅存 3 篇，全部 p2（EMR-Diff / UAFL / 对抗展开 UALNet）；arXiv × 会议本期匹配 **0 篇**——因为这三篇的预印本版本都是 2026-03（`2603.07918` / `2603.00920`，已逐个复核），落在 7 天窗口之外，本期只以会议身份出现，不重复占行。
+5. **信噪比画像**：16 篇窗口候选里 5 篇是光谱仪器/凝聚态物理（THz 发射器、CARS 显微镜、量子 FTIR、二聚化、张量 NN 理论）。宽泛 `all:"hyperspectral"` 在 physics 分类上信噪比很低，**门禁 + 任务词双层过滤不是可选项**。
 
-## 2. Ranked candidates
+---
 
-| 排名 | 标题（链接） | 来源/会议 | 日期 | 任务 | 数据/模态 | 核心贡献 | 代码/数据 | 评分 | 为什么值得看 |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | [EMR-Diff: Edge-aware Multimodal Residual Diffusion Model for Hyperspectral Image Super-resolution](https://openaccess.thecvf.com/content/CVPR2026/html/Zhang_EMR-Diff_Edge-aware_Multimodal_Residual_Diffusion_Model_for_Hyperspectral_Image_Super-resolution_CVPR_2026_paper.html) | CVPR 2026 | 2026 | LR-HSI + HR-MSI 融合超分 | 高光谱 + 多光谱 | 多模态残差机制贯通 HR-MSI/LR-HSI/HR-HSI；边缘感知噪声策略（对边缘区施加更强扰动）；Bilateral Attention Fusion UNet + 多尺度监督 | 未见代码链接（摘要未给出） | 8.5 | 会议侧最完整的高光谱融合超分方案，边缘感知噪声是可直接复用的训练策略 |
-| 2 | [Enhancing Unregistered Hyperspectral Image Super-Resolution via Unmixing-based Abundance Fusion Learning](https://openaccess.thecvf.com/content/CVPR2026/html/Zhang_Enhancing_Unregistered_Hyperspectral_Image_Super-Resolution_via_Unmixing-based_Abundance_Fusion_Learning_CVPR_2026_paper.html) | CVPR 2026 + arXiv 预印本 | 2026 | 未配准高光谱超分 | 高光谱 + 未配准参考图 | SVD 初始解混保端元、网络只增强丰度图；coarse-to-fine 可变形聚合（像素级 flow + 相似度图 + 亚像素精修）；空间-通道丰度交叉注意力 + 动态门控融合 | 代码：https://github.com/yingkai-zhang/UAFL | 8.5 | 正面处理真实遥感里最难的一点——参考图未配准，且把超分写进丰度空间 |
-| 3 | [Spectral Super-Resolution via Adversarial Unfolding and Data-Driven Spectrum Regularization: From Multispectral Satellite Data to NASA Hyperspectral Image](https://openaccess.thecvf.com/content/CVPR2026/html/Young_Spectral_Super-Resolution_via_Adversarial_Unfolding_and_Data-Driven_Spectrum_Regularization_From_CVPR_2026_paper.html) | CVPR 2026 + arXiv 预印本 | 2026 | 光谱超分（12→186 波段），空间统一到 5 m | Sentinel-2 → AVIRIS-NG | PriorNet 数据驱动光谱先验替代隐式深先验；把对抗项嵌进展开网络（unfolding adversarial learning，训练+测试双向判别引导） | 代码：https://github.com/IHCLab/UALNet | 8.5 | 与你的光谱超分方向完全同题，且给出 15% MACs / 1/20 参数的效率证据 |
-| 4 | [Super-Resolving Unseen Hyperspectral Sensors at Any Scale via Spatial Operators（OmniHSR）](https://arxiv.org/abs/2609.39926) | arXiv（续报） | 2026-09-30 | 跨传感器、任意倍率高光谱超分 | 高光谱（ARAD 训练，6 个未见数据集测试） | 不做谱值预测而预测**波段共享空间算子**；CSM 任意波段数重采样到参考位置；COFR 连续算子场支持 ×2~×48 | 摘要称「code will be publicly released soon」，**本期仍未开源** | 8.5 | 「预测算子而非像素」是目前跨传感器超分里最干净的重构，参数仅 0.538M |
-| 5 | [Hyperspectral Image Models: Technical Report](https://arxiv.org/abs/2609.39871) | arXiv（新） | 2026-09-30 | 统一基准/框架（分类为主） | 24 个场景：机载、星载、UAV、火星 CRISM | 55 模型 / 6 范式统一注册表，4D/5D 张量自动适配；Chebyshev 保护带的空间不相交划分消除像素重叠；1,320 次评测 + 6,600 次带种子运行 | 代码：https://github.com/Tanishq251/Hyperspectral-Image-Models | 8.5 | 把「高光谱 SOTA 不可比」这件事工程化解决，是最适合当你实验的评测底座 |
-| 6 | [HyperSAM: A Promptable Foundation Model for Hyperspectral Remote Sensing](https://arxiv.org/abs/2609.37340) | arXiv（新） | 2026-09-29 | 可提示高光谱基础模型（分类/异常/变化/目标/油膜） | 合成高光谱（SpaceNet 多光谱 → 物理启发丰度迁移）+ SAM3 伪掩码 | 冻结 SAM3 RGB 分支 + 从 RGB ViT 初始化的高光谱侧编码器 + ControlNet 式零初始化特征注入 + 轻量 MoE 掩码精修；CromSS 式置信度选择抗伪标签噪声 | 摘要未给出代码链接 | 8.0 | 把 SAM3 的交互先验借到高光谱，且自建数据合成管线解决了「高空间×密标注」稀缺 |
-| 7 | [Cross-Scale Pansharpening via ScaleFormer and the PanScale Benchmark](https://openaccess.thecvf.com/content/CVPR2026/html/Cao_Cross-Scale_Pansharpening_via_ScaleFormer_and_the_PanScale_Benchmark_CVPR_2026_paper.html) | CVPR 2026 + arXiv 预印本 | 2026 | 跨尺度全色锐化 | 全色 + 多光谱（PanScale 数据集） | 首个大规模跨尺度 pansharpening 数据集 + PanScale-Bench；ScaleFormer 把分辨率泛化改写为序列长度泛化（Scale-Aware Patchify + RoPE 外推） | 代码/数据：https://github.com/caoke-963/ScaleFormer | 8.0 | 数据集 + 基准 + 方法三件套，跨尺度泛化协议可直接搬到高光谱融合 |
-| 8 | [Resource-Aware Parameter-Efficient Model Adaptation for Onboard High-Dimensional Data（NE-LoRA）](https://arxiv.org/abs/2609.33687) | arXiv（新） | 2026-09-27 | 星上参数高效适配 | 4 个高光谱数据集 × 3 个骨干 | 低秩主分支 + 非线性辅助分支（NE-LoRA）；针对多矩阵适配器的差异化训练策略；以极小参数比例追平/部分超过全量微调 | 摘要未给出代码链接 | 7.5 | 面向 LEO 上行带宽的真实约束做高光谱在线更新，是「星上 PEFT」最直接的对标工作 |
-| 9 | [Spatial-Spectral Residuals Informed Diffusion Neural Operator for Pan-sharpening](https://openaccess.thecvf.com/content/CVPR2026/html/Huang_Spatial-Spectral_Residuals_Informed_Diffusion_Neural_Operator_for_Pan-sharpening_CVPR_2026_paper.html) | CVPR 2026 | 2026 | 全色锐化 | 全色 + 多光谱 | 用 Galerkin 型神经算子替换注意力去噪骨干（函数空间扩散）；把像元级空间-光谱一致性残差写进每一步反向扩散做闭环引导 | 摘要未给出代码链接 | 7.5 | 「神经算子 + 扩散」同时压计算量与提升保真度，和你关注的算子化超分同源 |
-| 10 | [Reuse or Relearn? A Spectral View of Earth Observation Foundation Models](https://arxiv.org/abs/2609.32756) | arXiv（续报） | 2026-09-26 | 基础模型微调诊断 | EO 基础模型 vs CLIP/DINO | 谱诊断三量（主子空间保持度、更新秩、更新幅度）：EO 模型更新更大、秩更高、保留预训练结构更少；子空间被保留处少量参数即可追平全量微调 | 未说明开源 | 7.5 | 给「该 PEFT 还是重学」提供可计算的判据，与 NE-LoRA 正好互补 |
-| 11 | [Prototype-Rule Neurosymbolic Regularization for Rank-Constrained Tensor Neural Networks under Label Scarcity](https://arxiv.org/abs/2609.40131) | arXiv（新） | 2026-09-30 | 标签稀缺下高光谱分类 | Botswana / Indian Pines / Pavia U / Salinas，空间分离折 + 2~20 样本/类 | 在 Rank-R 张量网络上加可微原型-规则正则，可选推理期证据融合；空间评测下 Macro-F1 提升 +8.82（Botswana）、+5.49（Indian Pines）、+1.59（Pavia U）、−0.62（Salinas） | 摘要未给出代码链接 | 6.5 | 提升主要来自训练期正则而非推理融合，这个拆解比单纯报高准确率诚实 |
-| 12 | [HyperDAM: Hyperspectral Distractor-Aware Memory with Amodal Expansion for SAM 3 Tracking](https://arxiv.org/abs/2609.34396) | arXiv（续报） | 2026-09-28 | 高光谱视频目标跟踪 | HOTC 2026 高光谱视频 | 帧零标定的高光谱门控拒绝对记忆的谱不一致更新；因果时空扩展器做向外 amodal 修正；私有评测第 2 名（68.0093% AUC / 87.7703% DP@20） | 自建 HOTC2026-Modal 标注 | 7.0 | 「门控式记忆更新」可平移到多时相变化检测的时序记忆 |
-| 13 | [Implicit Neural Representation for Hyperspectral Video Compression](https://arxiv.org/abs/2609.31435) | arXiv（续报） | 2026-09-25 | 高光谱视频压缩 | 快照式高光谱视频（HOT2026 样例） | INR 扩展 RGB 视频压缩模型；BD-PSNR +4.99 dB、BD-rate −88.88%；下游跟踪 AUC 最高 +23.42%、距离精度 +35.56% | 摘要未给出代码链接 | 6.5 | 少见地把「压缩率」与「下游任务可用性」一起评——对星上/机载链路很关键 |
-| 14 | [Multigrain-aware Semantic Prototype Scanning and Tri-Token Prompt Learning Embraced High-Order RWKV for Pan-Sharpening](https://openaccess.thecvf.com/content/CVPR2026/html/Li_Multigrain-aware_Semantic_Prototype_Scanning_and_Tri-Token_Prompt_Learning_Embraced_High-Order_CVPR_2026_paper.html) | CVPR 2026 | 2026 | 全色锐化 | 全色 + 多光谱 | 语义驱动扫描替代 RWKV 光栅扫描（LSH 建多粒度语义原型）；全局/原型/寄存器三 token 提示；可逆 Q-Shift 注入高频 | 摘要未给出代码链接 | 6.5 | 线性复杂度序列模型在全色锐化上的落地，适合做效率-精度对照基线 |
-| 15 | [QSCP: Beyond Class-Name Prompts for Query-Guided Semantic Change Parsing](https://arxiv.org/abs/2609.33088) | arXiv（新） | 2026-09-27 | 语义变化检测 / 指代变化检测 | SECOND、WHU-CDC（光学） | 支持类别名、同义词与意图句查询，返回查询掩码 + 配对时序语义图；意图-语义槽解析 + 双向视觉证据 + 查询条件解码器 | 代码：https://github.com/qianyuancs/QSCP | 6.0 | 把「变什么→变成什么」写成可查询任务，是视觉语言变化检测的实用接口 |
+## 一、高光谱筛选结果（`radar_filter.py` 原始输出）
 
-（评分口径见 skill 参考文件：新颖性、技术深度、证据强度、可复现性、趋势信号、可迁移性、与本人方向契合度。**未开源且摘要未给实验数字的条目已相应扣分**。）
+## 高光谱筛选结果
 
-## 3. Top 3 精读（本期把 CVPR 2026 的三篇高光谱超分放在最前）
+- 候选：16 篇 → **入选 2 篇**（过滤掉 14 篇）
+- 过滤规则：标题或摘要需同时命中 `hyperspectral / HSI` 与 A/B/C 关键词之一；pansharpening、multispectral 单独出现不算
 
-### 3.1 EMR-Diff（CVPR 2026）
-- **核心问题**：硬件无法同时给高空间与高光谱分辨率；扩散模型做 HSI 超分已知的痛点是采样低效、细节生成受限、去噪不足。
-- **方法**（来源事实，取自 CVF 摘要）：① **多模态残差机制**在 HR-MSI / LR-HSI / HR-HSI 三者间传递信息，提升融合效率；② **边缘感知噪声策略**用 HR-MSI 的边缘信息对边缘区域施加强噪声扰动，让模型优先重建高频细节；③ **Bilateral Attention Fusion UNet** + 多尺度监督，做渐进式重建与光谱-空间协同优化。
-- **证据**：摘要只声明「在定量指标与视觉质量上优于现有方法」，**未给出数据集名与具体数值**——不要在综述里替它编造数字。
-- **局限**：扩散采样成本在遥感大图/多时相批处理下仍是瓶颈（摘要未给推理耗时）；未提供代码链接，复现需等待。
-- **可延伸**：把「边缘感知噪声调度」与已有的光谱先验（如 UALNet 的 PriorNet）拼成**空间-光谱各向异性噪声调度**，并验收跨传感器场景；也可与 OmniHSR 的算子预测替换去噪骨干，测效率-精度前沿。
+| 优先 | 标题 | 来源 | 命中组 | 为什么值得看 |
+|---|---|---|---|---|
+| ② 高光谱超分 | Correcting Spectra Outside the Backbone: A Model-Agnostic Rectifier for Hyperspectral Image Super-Resolution | 2601.21338v2 | A | 骨干无关光谱整流器 SR²-Net；在 5 个 CNN/Transformer 骨干上验证，直击“光谱结构属于数据” |
+| ② 高光谱超分 | Spectral Super-Resolution using Spatial-Spectral Residual Operator Networks | 2609.35410v1 | A | 把光谱超分建成算子学习问题；Sentinel-2A 类多光谱 → EMIT 高光谱，含零样本波段外推 |
 
-### 3.2 Unregistered HSI SR via Unmixing-based Abundance Fusion Learning（CVPR 2026）
-- **核心问题**：真实场景里高分辨率参考图往往**未配准**，直接融合会把错位当纹理学进去。
-- **方法**（来源事实）：先用 SVD 做初始解混，**保端元不动，让网络只增强丰度图**（把病态的谱恢复问题降维成空间增强问题）；再用 **coarse-to-fine 可变形聚合**（粗金字塔预测像素级 flow 与相似度图 → 细亚像素精修）吸收未配准参考图的空间纹理；随后以空间-通道**丰度交叉注意力**块精修，并用动态门控的空间-通道调制融合模块合并编解码特征。
-- **证据**：模拟与真实数据集上 SOTA 级超分性能；代码承诺开源并给出仓库地址（https://github.com/yingkai-zhang/UAFL ）。
-- **局限**：解混假设线性混合模型，非线性/强阴影场景端元保真度存疑；可变形聚合在小重叠区可能退化（摘要未讨论失败案例）。
-- **可延伸**：把该框架的「解混 → 丰度空间融合」当成通用骨架，替换空间增强分支为扩散（EMR-Diff 式）或算子（OmniHSR 式）；再把它接到跨传感器设定（训练一个传感器、测试另一个）验证是否仍成立。
+**被过滤（前 12 条，附原因）**
 
-### 3.3 Spectral Super-Resolution via Adversarial Unfolding（CVPR 2026）
-- **核心问题**：Sentinel-2 只有 12 波段且空间分辨率不统一（60/20/10 m），而 AVIRIS-NG 这类高光谱只能覆盖北美局部——**能否用全球可得的 Sentinel-2 重建出 NASA 级高光谱？**
-- **方法**（来源事实）：深展开框架 + **PriorNet 数据驱动光谱先验**替代常规的隐式深先验；把对抗项嵌入展开架构（判别器在**训练与测试阶段**都引导重建），作者称之为 unfolding adversarial learning（UAL）。任务是 12→186 波段光谱超分，并把空间分辨率统一到 5 m。
-- **证据**：PSNR/SSIM/SAM 三项优于次优的 Transformer，同时只用 15% MACs、参数量少 20 倍；代码开源（https://github.com/IHCLab/UALNet ）。
-- **局限**：跨域依赖 S2 → AVIRIS-NG 的配对构造，全球其他区域是否成立未验证；对抗展开的训练稳定性（摘要未报方差/多轮重复）。
-- **可延伸**：把 PriorNet 换成 EO 基础模型的谱嵌入（SpectraEarth-FM 一类），看能否减少配对需求；或把「测试期判别引导」搬到跨传感器超分，检验它是真泛化还是测试时过拟合。
+- `未命中 A/B/C 任一关键词` — High-power photoconductive THz emitters for fast parallel electro-optic detection
+- `未命中 A/B/C 任一关键词` — Prototype-Rule Neurosymbolic Regularization for Rank-Constrained Tensor Neural Networks under L
+- `未命中 A/B/C 任一关键词` — Strong Dimerization and Field-Induced Reconstruction of the Low-Energy Spectrum in $\mathrm{Cu}
+- `未命中 A/B/C 任一关键词` — Super-Resolving Unseen Hyperspectral Sensors at Any Scale via Spatial Operators
+- `未命中 A/B/C 任一关键词` — Hyperspectral Image Models: Technical Report
+- `未命中 A/B/C 任一关键词` — Phase-resolved wide-field CARS microscopy with speckle illumination
+- `未命中 A/B/C 任一关键词` — HyperSAM: A Promptable Foundation Model for Hyperspectral Remote Sensing
+- `未命中 A/B/C 任一关键词` — Scanless quantum Fourier-transform mid-infrared spectroscopy for solids and surface analysis
+- `未命中 A/B/C 任一关键词` — HyperDAM: Hyperspectral Distractor-Aware Memory with Amodal Expansion for SAM 3 Tracking
+- `未命中 A/B/C 任一关键词` — Resource-Aware Parameter-Efficient Model Adaptation for Onboard High-Dimensional Data
+- `未命中 A/B/C 任一关键词` — Implicit Neural Representation for Hyperspectral Video Compression
+- `未命中 A/B/C 任一关键词` — Band-Selection Stability and Semantic Segmentation Performance: A Study on Hyperspectral City
+- …另有 2 条
 
-## 4. 三个可做的选题
+### 计数与去向（16 = 2 + 14 的完整分解）
 
-### 选题 A：波长条件化的统一算子超分（Operator-based Unified Spectral-Spatial SR）
-- **Problem**：现有高光谱超分按传感器、按尺度、按融合设置各自为政；跨传感器/任意倍率需要重训或适配。
-- **Hypothesis**：把「预测逐波段谱值」改为「预测波段共享/波长条件的空间算子」，可同时得到跨传感器泛化、任意尺度重建与参数效率（OmniHSR 与 ScaleFormer 分别在空间侧支持这一点）。
-- **Method sketch**：波长编码器（连续 λ 嵌入）+ 算子场（CSM/COFR 变体）+ 连续谱输出头（SSRON 的 DeepONet 式 function-to-function），训练时随机采样波段数与尺度做元训练；推理时给波长即可外推。
-- **数据与指标**：ARAD、Pavia U、Chikusei、PanScale、EMIT/Sentinel-2 配对；PSNR/SSIM/SAM/ERGAS + 未见传感器零适配 PSNR 提升 + 参数量/FLOPs/推理时延。
-- **Baselines**：OmniHSR、SSRON、ScaleFormer、UALNet/UAFL（会议侧三家）、以及经典耦合张量方法。
-- **第一个最小可证伪实验**：在 ARAD 上训练、直接在 Pavia U 上零适配测 ×4/×8/×16，若不如「按目标传感器微调 10% 数据」的基线，则算子假设不成立。
-- **Risk**：算子预测的计算成本可能随波段数上升；多传感器评测协议不统一导致对比不公（需固定评测场景，建议直接用 Hyperspectral Image Models 的空间不相交划分）。
+| 去向 | 篇数 | 说明 |
+|---|---|---|
+| 入选 | 2 | 均为 p2 高光谱超分，A 组命中在标题 |
+| 过滤：纯仪器/物理噪声 | 5 | THz 发射器、CARS 显微镜、量子 FTIR、凝聚态二聚化、张量网络理论 |
+| 过滤：**可证召回缺口** | 1 | `2609.39926` 正文 A/B/C 命中但标题未命中（见下节） |
+| 过滤：相关但无 A/B/C 任务词 | 6 | Hyperspectral Image Models、HyperSAM、NE-LoRA、Band-Selection/Seg、INR 高光谱视频压缩、HyperDAM 跟踪 |
+| 过滤：窗口外的旧文（updated-only） | 2 | `2603.25530` 子空间 Tucker、`2603.25255` 轨迹异常检测 |
 
-### 选题 B：未配准 / 跨分辨率下的解混-扩散联合融合
-- **Problem**：真实融合最大杀手是配准误差与分辨率不匹配；现有扩散融合（EMR-Diff）假设已配准，未配准工作（UAFL）用确定性网络增强，缺概率化的不确定性表达。
-- **Hypothesis**：在丰度空间做扩散（而非谱空间），配准误差被显式建模为丰度图的形变不确定性时，跨传感器、强错位条件下的融合更稳。
-- **Method sketch**：SVD/非负解混得端元与低分辨丰度 → 扩散模型在丰度空间去噪，形变场作为条件变量并输出后验样本 → 多尺度监督 + 空间-通道门控融合；用扩散样本的方差作为不确定度图。
-- **数据与指标**：Pavia U/Chikusei + 合成错位（像素级到亚像素级）、真实未配准数据、PanScale；PSNR/SAM（谱保真）+ 错位鲁棒曲线 + 不确定度校准（ECE）。
-- **Baselines**：UAFL、EMR-Diff、Diffusion Neural Operator pan-sharpening、少样本微调版 UALNet。
-- **第一个最小可证伪实验**：只在合成错位（0/1/2/4 像素平移）上对比 UAFL 与「丰度空间扩散」，若在 4 像素错位下 SAM 无优势就放弃扩散路线。
-- **Risk**：扩散推理成本；端元估计误差会直接污染扩散条件（需做端元误差传播的消融）。
+---
 
-### 选题 C：星上自适应更新的「可复用性判据」
-- **Problem**：在轨模型随数据分布漂移需要更新，但 LEO 上行带宽有限；什么时候用 LoRA/NE-LoRA 就够、什么时候必须重学，目前没有可计算判据。
-- **Hypothesis**：Reuse or Relearn 的谱诊断量（主子空间保持度、更新秩、更新幅度）在**更新前**即可预测参数高效适配的效果，从而把适配预算分配变成可决策问题。
-- **Method sketch**：在高光谱分类/分割骨干（含 1D-CNN、HyViT 类、Mamba）上先用诊断量刻画预训练子空间，再按诊断结果选择 NE-LoRA 分支结构 / 秩 / 参与矩阵；把「诊断 → 策略」训练成一个轻量决策器。
-- **数据与指标**：Indian Pines、Pavia U、Houston、WHU-Hi 等 + 4 个以上骨干；目标精度保持率 vs 上行字节数（accuracy-per-byte）、诊断量的预测相关性（Spearman）。
-- **Baselines**：全量微调、LoRA、NE-LoRA、只冻结骨干的线性探测。
-- **第一个最小可证伪实验**：在 2 个数据集 × 3 个骨干上算诊断量并与 PEFT 追平全量微调所需参数量做秩相关，若相关性不显著则判据不成立。
-- **Risk**：诊断量在真实星上漂移（云、季节）下的稳定性未知；评测协议若不统一，结论易被质疑（同样建议采用空间不相交划分）。
+## 二、验收发现：策略准确性（title-only vs text-level）
+
+`search_keywords.txt` 文件头写的是 *"Matching: case-insensitive SUBSTRING match against **title and/or abstract**"*，但 `radar_keywords.py` 的 `exclusion_reason()` 实际把 **A/B/C 限定在标题**（`abc_title`），只有门禁词 `hyperspectral/HSI` 才允许出现在摘要里。
+
+用同一份关键词表做了离线复算（`diagnose-2026-10-02b.py`，未改动策略文件）：
+
+| 检验 | 结果 |
+|---|---|
+| 现行规则（title-only A/B/C） | 16 → **2** |
+| 门禁 + A/B/C 都放宽到"标题或摘要" | 16 → **3** |
+| 差集（可证漏检） | 仅 1 篇：`2609.39926` |
+
+**唯一漏检**：`Super-Resolving Unseen Hyperspectral Sensors at Any Scale via Spatial Operators`
+（摘要原文：*"... remains challenging in hyperspectral super-resolution (HSR)"*；A 组命中 `hyperspectral super-resolution` **和** `spectral super-resolution`）。它用 `Super-Resolving` 而非 `super-resolution`，因此按标题匹配必然落选。
+**建议（未擅自实施）**：要么在 A 组补一条词形 `super-resolving hyperspectral`，要么把 A/B/C 的匹配范围改成与文件头一致的"标题或摘要"。两种改法都**不新增语义**，只修词形/范围。若刻意保持"标题必须点名任务"的高精度立场，则本表就是预期行为，可忽略本条。
+
+**另一类值得人工确认的（非 bug）**：6 篇"相关但无 A/B/C 任务词"里，`Hyperspectral Image Models`、`HyperSAM`、`NE-LoRA` 三篇显然属于用户关心的 ③ 基础模型/少样本 档，但 **B 组只列了 classification 短语**（`hyperspectral foundation model classification` / `hyperspectral classification` ...），所以纯分割/提示式/适配类基础模型工作永远进不来。这是策略取舍，不是实现错误——需要用户决定是否给 B 组加一条通用的 `hyperspectral foundation model`。
+
+---
+
+## 三、Top 3 精读
+
+### 1. Spectral Super-Resolution using Spatial-Spectral Residual Operator Networks（`2609.35410`，2026-09-28，cs.CV）
+[arXiv](https://arxiv.org/abs/2609.35410v1)
+
+- **核心问题**：多光谱卫星影像 → 高光谱影像的**光谱超分**（由病态逆问题驱动），目标是在不增加传感器成本的前提下获得高时空分辨率高光谱数据。
+- **方法**：把任务重写成**算子学习**，提出 SSRON（Deep Operator Network），学习"降采样光谱 → 连续光谱"的**函数到函数映射**；训练集为 Sentinel-2A 类多光谱 → EMIT 高光谱。
+- **证据（原文事实）**：在所有指标上优于基线；具备**零样本能力**——能预测训练时没见过的波段；连续输出形式使其可在比原生传感器更细的波长间隔上估计光谱。
+- **局限**：单作者工作、未见代码链接；摘要未给参数量/推理成本、未做跨传感器（unseen sensor）验证；"更细波长间隔"只有定性表述，没有定量实验。
+- **可延伸**：把算子场输出接到下一个 7 天窗口的"任意尺度"路线（见 OmniHSR）上，做一次统一的算子 vs 数值预测对照。
+
+### 2. Correcting Spectra Outside the Backbone: A Model-Agnostic Rectifier for Hyperspectral Image Super-Resolution（`2601.21338v2`，首发 2026-01-29，本期 **updated-only**）
+[arXiv](https://arxiv.org/abs/2601.21338v2)
+
+- **核心问题**：现有 HSI-SR（无论是改自 RGB 超分骨干还是专用光谱-空间架构）都在追空间细节，**残留光谱误差**没人管；而把光谱处理绑进某个骨干，就等于每换一个骨干都要重做一遍。
+- **方法**：SR²-Net，一个**与骨干无关的整流器**——只吃骨干的输出，不改骨干内部结构。"先增强再整流"：H-S³A（分层光谱-空间协同注意力）强化跨波段交互，MCR（模态约束整流）把修正限制在一个学到的紧凑光谱子空间内，另加**退化一致性约束**把输出拴回观测到的低分辨率输入。
+- **证据**：在 **5 个骨干**（覆盖 CNN / Transformer 等）上做了实验（摘要截断处为"five backbones spanning CNN, Tra…"）。
+- **局限**：整流器仍需**逐骨干训练**，并非 plug-and-play 零成本；v2 为旧文更新而非新投稿，本期窗口内无新实验信息（只能看到 v2 摘要）。
+- **可延伸**：这个"整流器"概念可以直接搬到光谱超分/跨传感器场景，与下面的 OmniHSR 组合。
+
+### 3. Super-Resolving Unseen Hyperspectral Sensors at Any Scale via Spatial Operators（`2609.39926`，2026-09-30，cs.CV）
+[arXiv](https://arxiv.org/abs/2609.39926v1)　⚠️ **本篇被现行筛选规则漏掉（见「验收发现」），在此列为精读是为验收留证。**
+
+- **核心问题**：单一模型同时做到**跨传感器泛化**与**任意尺度重建**；现有方法一旦遇到训练范围外的新传感器/新尺度，就要额外数据与算力兜底。
+- **方法**：OmniHSR，**预测波段共享的空间算子**而非光谱值。CSM（跨光谱映射）把任意波段数的输入重采样到固定参考位置并预测带高斯支撑的局部算子；COFR（连续算子场重建）把这些算子组装成连续场，作用于全部原始波段，实现任意尺度重建。
+- **证据（原文事实，摘要级）**：7 个数据集上"预测算子"全面优于"直接预测光谱值"；仅在 ARAD 上训练（**0.538M 参数**），在 **6 个未见数据集**上零样本超过所有直接迁移基线；在 Pavia U 与 Chikusei 上、×2 到 ×48 共 **12 个上采样倍率**平均 PSNR 比最强基线高 **0.55 dB**；优于在目标传感器上从头训练或适配的基线；推理最高快 **36×**。代码"即将公开"（**尚无仓库**）。
+- **局限**：性能优势全部以 PSNR/推理速度呈现，**未报告下游任务（分类/解混）增益**；代码未发布，复现需自行实现算子场；"优于目标域训练"的反常结论需要看实验设置（是否有信息泄漏）才能采信（此为我的审查建议，非原文结论）。
+- **可延伸**：与 SR²-Net 的整流器组合 → 见选题 2。
+
+---
+
+## 四、本期可做的 3 个选题
+
+### 选题 1｜任务驱动超分：让"算子场输出"被分类/解混反向约束（优先级 ①）
+- **Problem**：本期两条超分主线（算子学习 SSRON、空间算子 OmniHSR）**都只用重建指标（PSNR/SSIM）说话**，没有任何一篇报告下游分类/解混增益；而"超分到底帮不帮下游"在文献里长期欠账。
+- **Hypothesis**：在空间算子场输出上叠加一个**任务感知整流器**，并用下游分类/解混损失联合优化，能在 PSNR 损失很小的前提下显著提升下游 OA/AA/Kappa，且跨传感器仍成立。
+- **Method sketch**：以 OmniHSR 式算子场为主干（band-shared 空间算子 + 连续算子场重建），冻结主干、并联一个 SR²-Net 式轻量整流器；总损失 = 重建 + λ·下游任务损失（分类头或线性解混 + 任务损失）；消融 λ、整流器容量、是否解冻主干。
+- **数据与指标**：训练 ARAD / EMIT + Sentinel-2A 类；测试 Pavia U、Chikusei（任意尺度 ×2…×48）；指标 PSNR/SSIM/SAM/ERGAS **+ 下游 OA/AA/Kappa**（用统一协议避免像素重叠）。
+- **Baselines**：SSRON、OmniHSR（复现版）、SR²-Net、直接迁移的 HSI-SR 骨干；分类侧用统一场景划分下的标准 CNN/ViT 分类器。
+- **最小可证伪实验**：单场景 + ×4 单一倍率。冻结主干、只训整流器，比较 λ=0 与 λ>0 的下游 OA。若 OA 无提升或 PSNR 掉 >0.3 dB，则假设不成立。
+- **Risk**：OmniHSR 代码未发布，复现成本高；联合优化易退化为"重建变差换任务变好"的平凡权衡；需要严格控制训练/测试像素不重叠，否则 OA 虚高。
+
+### 选题 2｜跨传感器零样本 HSI-SR 的"骨干无关整流器"（优先级 ②）
+- **Problem**：SR²-Net 证明整流器可以脱离骨干，但仍需**逐骨干训练**、且面向单传感器设定；OmniHSR 解决跨传感器/任意尺度，却仍直接输出光谱值。两者互补但无人合并。
+- **Hypothesis**：把 MCR 式的**紧凑光谱子空间约束**嫁接到"空间算子场"输出上，可以同时获得跨传感器泛化与光谱保真，并且在 unseen 传感器上不需要任何目标域训练。
+- **Method sketch**：主干 = 波段共享空间算子预测；输出侧 = 在学到的光谱子空间内做模态约束修正 + 退化一致性约束；整流器**训练一次、对所有未见传感器复用**（这比 SR²-Net 的逐骨干训练更强，是本选题的赌注）。
+- **数据与指标**：训练 ARAD（单源）；零样本测试 6 个未见数据集（Pavia U、Chikusei 等）；指标 PSNR/SSIM/SAM/ERGAS + 跨传感器方差 + 推理时间/参数量。
+- **Baselines**：OmniHSR、SR²-Net、直接迁移的 SOTA HSI-SR、目标域从头训练（上界参考）。
+- **最小可证伪实验**：一个源数据集 + 一个未见传感器 + ×4。若一次训练的整流器相对无整流器在 unseen 传感器上没有 ≥0.2 dB PSNR 或 ≥5% SAM 改善，则"整流器可零成本跨传感器复用"不成立。
+- **Risk**：0.2–0.5 dB 级别的提升可能落进种子噪声；"整流器与传感器解耦"可能只是参数量太小带来的正则化效应（需做参数量对照）。
+
+### 选题 3｜超分对下游到底有没有用：一次带防泄漏协议的干净测量（优先级 ①/④）
+- **Problem**：本期多家工作（SSRON、OmniHSR、SR²-Net）全都只报重建指标；而高光谱社区最大的可信度问题是**训练-测试像素重叠导致下游指标虚高**。
+- **Hypothesis**：在严格 spatially-disjoint 划分（带 Chebyshev 保护带）下，用超分结果重训下游分类器的增益，**显著小于**文献常报的增益。
+- **Method sketch**：把 SSRON/OmniHSR 输出的连续光谱当输入，喂给固定分类器；对照 = 原始低分辨率输入、双三次上采样；划分协议采用 spatially-disjoint regional blocking + Chebyshev guard band（本期 `2609.39871` 的 Technical Report 已给出该协议与 55 模型/24 场景的注册表，可作为现成基础设施）。
+- **数据与指标**：Houston 2018、Botswana、Pavia U、Chikusei；指标 OA/AA/Kappa + 划分敏感性（多次随机划分的方差）。
+- **Baselines**：双三次上采样、原始 LR 输入、CNN/ViT 分类器、以及论文所报数字（作为对照的"乐观上界"）。
+- **最小可证伪实验**：1 个场景 + 2 种划分（重叠 vs 不重叠）。若两种划分下超分增益差异 <2 个点，则"泄漏是虚高主因"不成立。
+- **Risk**：负结果不易发表（但正是社区需要的）；需要重实现多套分类流程，工程量大；`2609.39871` 的框架尚未确认开源。
+
+---
+
+## 五、会议论文（CVPR 2026）
+
 ## 会议论文（Conference）
 
-**arXiv × 会议索引匹配**：464 个候选，命中 7 篇同时有会议版本。
+**arXiv × 会议索引匹配**：16 个候选，命中 0 篇同时有会议版本。
 
-| arXiv 候选标题 | 会议 | 匹配度 | 会议页 |
-|---|---|---|---|
-| MetaSpectra+: A Compact Broadband Metasurface Camera for Snapshot Hyperspectral+ Imaging | CVPR2026 | 1.00 | [CVF](https://openaccess.thecvf.com/content/CVPR2026/html/Liu_MetaSpectra_A_Compact_Broadband_Metasurface_Camera_for_Snapshot_Hyperspectral_Imaging_CVPR_2026_paper.html) |
-| Enhancing Unregistered Hyperspectral Image Super-Resolution via Unmixing-based Abundance Fusion Learning | CVPR2026 | 1.00 | [CVF](https://openaccess.thecvf.com/content/CVPR2026/html/Zhang_Enhancing_Unregistered_Hyperspectral_Image_Super-Resolution_via_Unmixing-based_Abundance_Fusion_Learning_CVPR_2026_paper.html) |
-| Spectral Super-Resolution via Adversarial Unfolding and Data-Driven Spectrum Regularization: From Multispectral Satellite Data to NASA Hyperspectral Image | CVPR2026 | 1.00 | [CVF](https://openaccess.thecvf.com/content/CVPR2026/html/Young_Spectral_Super-Resolution_via_Adversarial_Unfolding_and_Data-Driven_Spectrum_Regularization_From_CVPR_2026_paper.html) |
-| Exploring Spatiotemporal Feature Propagation for Video-Level Compressive Spectral Reconstruction: Dataset, Model and Benchmark | CVPR2026 | 1.00 | [CVF](https://openaccess.thecvf.com/content/CVPR2026/html/Cai_Exploring_Spatiotemporal_Feature_Propagation_for_Video-Level_Compressive_Spectral_Reconstruction_Dataset_CVPR_2026_paper.html) |
-| Cross-Scale Pansharpening via ScaleFormer and the PanScale Benchmark | CVPR2026 | 1.00 | [CVF](https://openaccess.thecvf.com/content/CVPR2026/html/Cao_Cross-Scale_Pansharpening_via_ScaleFormer_and_the_PanScale_Benchmark_CVPR_2026_paper.html) |
-| Lumosaic: Hyperspectral Video via Active Illumination and Coded-Exposure Pixels | CVPR2026 | 1.00 | [CVF](https://openaccess.thecvf.com/content/CVPR2026/html/Verma_Lumosaic_Hyperspectral_Video_via_Active_Illumination_and_Coded-Exposure_Pixels_CVPR_2026_paper.html) |
-| Brewing Stronger Features: Dual-Teacher Distillation for Multispectral Earth Observation | CVPR2026 | 1.00 | [CVF](https://openaccess.thecvf.com/content/CVPR2026/html/Wolf_Brewing_Stronger_Features_Dual-Teacher_Distillation_for_Multispectral_Earth_Observation_CVPR_2026_paper.html) |
+（本期无候选命中会议版本。）
 
-**会议新进榜（Conference spotlight）**：本次首次纳入 15 篇。
+**会议新进榜（Conference spotlight）**：本次首次纳入 3 篇。
 
-### CVPR2026（15 篇）
+### CVPR2026（3 篇）
 
-- **[核心]** Brewing Stronger Features: Dual-Teacher Distillation for Multispectral Earth Observation — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Wolf_Brewing_Stronger_Features_Dual-Teacher_Distillation_for_Multispectral_Earth_Observation_CVPR_2026_paper.html)
-- **[核心]** Cross-Scale Pansharpening via ScaleFormer and the PanScale Benchmark — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Cao_Cross-Scale_Pansharpening_via_ScaleFormer_and_the_PanScale_Benchmark_CVPR_2026_paper.html)
-- **[核心]** EMR-Diff: Edge-aware Multimodal Residual Diffusion Model for Hyperspectral Image Super-resolution — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Zhang_EMR-Diff_Edge-aware_Multimodal_Residual_Diffusion_Model_for_Hyperspectral_Image_Super-resolution_CVPR_2026_paper.html)
-- **[核心]** Enhancing Unregistered Hyperspectral Image Super-Resolution via Unmixing-based Abundance Fusion Learning — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Zhang_Enhancing_Unregistered_Hyperspectral_Image_Super-Resolution_via_Unmixing-based_Abundance_Fusion_Learning_CVPR_2026_paper.html)
-- **[核心]** Exploring Spatiotemporal Feature Propagation for Video-Level Compressive Spectral Reconstruction: Dataset, Model and Benchmark — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Cai_Exploring_Spatiotemporal_Feature_Propagation_for_Video-Level_Compressive_Spectral_Reconstruction_Dataset_CVPR_2026_paper.html)
-- **[核心]** Leveraging Multispectral Sensors for Color Correction in Mobile Cameras — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Cogo_Leveraging_Multispectral_Sensors_for_Color_Correction_in_Mobile_Cameras_CVPR_2026_paper.html)
-- **[核心]** Lumosaic: Hyperspectral Video via Active Illumination and Coded-Exposure Pixels — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Verma_Lumosaic_Hyperspectral_Video_via_Active_Illumination_and_Coded-Exposure_Pixels_CVPR_2026_paper.html)
-- **[核心]** MetaSpectra+: A Compact Broadband Metasurface Camera for Snapshot Hyperspectral+ Imaging — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Liu_MetaSpectra_A_Compact_Broadband_Metasurface_Camera_for_Snapshot_Hyperspectral_Imaging_CVPR_2026_paper.html)
-- **[核心]** Multigrain-aware Semantic Prototype Scanning and Tri-Token Prompt Learning Embraced High-Order RWKV for Pan-Sharpening — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Li_Multigrain-aware_Semantic_Prototype_Scanning_and_Tri-Token_Prompt_Learning_Embraced_High-Order_CVPR_2026_paper.html)
-- **[核心]** Regulating Rather than Constraining: Adaptive Guidance for Complex Spectral Reconstruction in Pansharpening — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Wen_Regulating_Rather_than_Constraining_Adaptive_Guidance_for_Complex_Spectral_Reconstruction_CVPR_2026_paper.html)
-- **[核心]** SGDE: Self-supervised Geometry Degradation Estimation Framework for Coded Aperture Compressive Spectral Imaging — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/He_SGDE_Self-supervised_Geometry_Degradation_Estimation_Framework_for_Coded_Aperture_Compressive_CVPR_2026_paper.html)
-- **[核心]** Spatial-Spectral Residuals Informed Diffusion Neural Operator for Pan-sharpening — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Huang_Spatial-Spectral_Residuals_Informed_Diffusion_Neural_Operator_for_Pan-sharpening_CVPR_2026_paper.html)
-- **[核心]** Spectral Super-Resolution via Adversarial Unfolding and Data-Driven Spectrum Regularization: From Multispectral Satellite Data to NASA Hyperspectral Image — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Young_Spectral_Super-Resolution_via_Adversarial_Unfolding_and_Data-Driven_Spectrum_Regularization_From_CVPR_2026_paper.html)
-- **[核心]** Spectrum from Defocus: Fast Spectral Imaging with Chromatic Focal Stack — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Aydin_Spectrum_from_Defocus_Fast_Spectral_Imaging_with_Chromatic_Focal_Stack_CVPR_2026_paper.html)
-- **[核心]** WHU-MARS: A Multispectral Aerial-Ground Benchmark Towards Any-Scenario Person Re-Identification — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Zhao_WHU-MARS_A_Multispectral_Aerial-Ground_Benchmark_Towards_Any-Scenario_Person_Re-Identification_CVPR_2026_paper.html)
+- **[p2]** EMR-Diff: Edge-aware Multimodal Residual Diffusion Model for Hyperspectral Image Super-resolution — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Zhang_EMR-Diff_Edge-aware_Multimodal_Residual_Diffusion_Model_for_Hyperspectral_Image_Super-resolution_CVPR_2026_paper.html)
+- **[p2]** Enhancing Unregistered Hyperspectral Image Super-Resolution via Unmixing-based Abundance Fusion Learning — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Zhang_Enhancing_Unregistered_Hyperspectral_Image_Super-Resolution_via_Unmixing-based_Abundance_Fusion_Learning_CVPR_2026_paper.html)
+- **[p2]** Spectral Super-Resolution via Adversarial Unfolding and Data-Driven Spectrum Regularization: From Multispectral Satellite Data to NASA Hyperspectral Image — [CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Young_Spectral_Super-Resolution_via_Adversarial_Unfolding_and_Data-Driven_Spectrum_Regularization_From_CVPR_2026_paper.html)
 
 _已更新 seen-state（1 个 venue）_
 
-## 排除说明与来源说明
+**补充说明（已复核的事实）**：
+- 会议索引本期共 **4,042 条**（CVPR2026 `?day=all`，本地缓存，未重下），按现行策略过滤后**仅存 3 条，全部 p2（高光谱超分）**。
+- 这 3 篇的 arXiv 预印本均已逐个复核存在：UAFL → [`2603.07918`](https://arxiv.org/abs/2603.07918)，UALNet（对抗展开）→ [`2603.00920`](https://arxiv.org/abs/2603.00920)；EMR-Diff 未见对应预印本。因预印本日期为 2026-03，不在本期 7 天窗口，故 arXiv × 会议匹配数为 0——**不是漏匹配**。
+- seen-state 已于本期清空，因此这 3 篇以"会议新进榜"身份出现；下次运行会显示"首次纳入 0 篇"（预期行为）。
 
-### 6.1 本期排除的候选
+---
 
-| 条目 | 来源 | 排除理由 |
-|---|---|---|
-| Region-Local Copula Evidence Fusion for Heterogeneous Remote Sensing Change Detection | arXiv 2609.32716（2026-09-26） | 异源变化检测，实验基准为 Lake / UK（光学- SAR 跨模态），按 skill 默认策略归为 SAR 相关排除 |
-| Cryo-Bench: Benchmarking Foundation Models for Cryosphere Mapping | arXiv 2603.01576（更新，2026-03-02 首发） | 冰冻圈制图，摘要含 SAR/微波成分，本期不纳入 |
-| High-power photoconductive THz emitters… / Phase-resolved wide-field CARS microscopy… / Scanless quantum Fourier-transform mid-infrared spectroscopy… | arXiv 2610.00744、2609.39730、2609.37281（2026-09-29~30） | 纯光谱仪器/物理测量，无 ML 或地理空间角度 |
-| MetaSpectra+ / Lumosaic / Spectrum from Defocus / SGDE（编码孔径压缩光谱成像）/ Leveraging Multispectral Sensors for Color Correction / WHU-MARS（多光谱行人重识别） | CVPR 2026 会议索引 | **保留在会议新进榜内**，但按 skill 规则属硬件类/非遥感 CV 任务，不进入加权排名（Lumosaic 与 MetaSpectra+ 属硬件类，WHU-MARS 属非地理空间任务） |
+## 六、排除说明
 
-### 6.2 来源与检索方法（可复核）
+**A. 噪声（门禁之外的仪器/物理工作，5 篇）**——宽泛 `hyperspectral` 查询在 physics/eess 上的典型污染，全部因「未命中 A/B/C 任一关键词」被丢弃：
+- `2610.00744` High-power photoconductive THz emitters…（太赫兹器件）
+- `2609.39730` Phase-resolved wide-field CARS microscopy…（相干拉曼显微）
+- `2609.37281` Scanless quantum Fourier-transform mid-infrared spectroscopy…（量子 FTIR 光谱仪）
+- `2609.39966v2` Strong Dimerization and Field-Induced Reconstruction…（凝聚态光谱）
+- `2609.40131` Prototype-Rule Neurosymbolic Regularization for Rank-Constrained Tensor Neural Networks…（张量网络理论）
 
-- **arXiv API**：`https://export.arxiv.org/api/query`，16 次查询全部 200-OK（0 次失败，本轮未触发 429/503），请求间隔 3.6 s，每条请求 `--max-time 30`。核心表述覆盖：`all:"hyperspectral" AND all:"super-resolution"`、`all:"hyperspectral image super-resolution"`、`all:"spectral super-resolution"`、`all:"pansharpening"`、`all:"hyperspectral" AND all:"classification"`、`all:"hyperspectral" AND all:"foundation model"`、`cat:eess.IV AND all:hyperspectral`、`all:"hyperspectral" AND all:"unmixing"`（以上 8 条带 `submittedDate` 窗口限定），另有 8 条无界 `sortBy=submittedDate` 查询用于窗口/延迟核验。
-- **窗口核验**：无界查询 `all:"hyperspectral"`（max_results=300）返回的 `published` 跨度为 2026-01-18 ~ 2026-09-30；`all:"spectral super-resolution"` 最新为 09-28，`all:"pansharpening"` 最新为 08-21。**故 09-30 之后的论文不是「没有」，而是尚未进入 arXiv 索引（公告延迟）**，本期有效窗口为 09-25 ~ 09-30。
-- **候选复核**：12 个进入榜单/分析的 arXiv ID 逐个请求 `arxiv.org/abs/<id>`，比对 `citation_title` 与本地标题，**12/12 一致**（逐一打印通过）。
-- **会议来源**：CVF 开放获取库 `openaccess.thecvf.com` 的 `CVPR2026?day=all` 列表（4,042 条，本地缓存 2,614,128 字节，`conf_index.py` 命中缓存未重新下载）；6 篇重点会议论文的摘要通过 CVF 论文页直接抓取（非二手转述）。
-- **未使用**：Semantic Scholar、Papers with Code、Hugging Face（因此本报告不对这三个源的榜单/热度作任何断言）。
-- **区分声明**：报告中标「来源事实」的句子可在上述 URL 复核；「推断」性判断（趋势、可迁移性、评分）为本人分析，不属原始论文论断。
+**B. 相关但按现行策略排除（6 篇，均非超分/分类任务）**：
+- `2609.39871` Hyperspectral Image Models: Technical Report — 统一 55 模型 / 24 场景 / 6,600 次带种子运行的评测框架，**内容高度相关**，但标题与摘要不含 SR/分类短语 → 落选（见「验收发现」）。
+- `2609.37340` HyperSAM — 提示式高光谱基础模型（SAM3 + 合成高光谱数据），属**分割**，B 组只收分类短语 → 落选。
+- `2609.33687` Resource-Aware Parameter-Efficient Model Adaptation（NE-LoRA）— 星上高光谱 PEFT，属分类/适配 → 落选。
+- `2609.31074` Band-Selection Stability and Semantic Segmentation…（高光谱城市语义分割）
+- `2609.31435` Implicit Neural Representation for Hyperspectral Video Compression（高光谱视频压缩 + 跟踪）
+- `2609.34396` HyperDAM…for SAM 3 Tracking（高光谱视频跟踪，HOTC 2026 第二名）
 
-### 6.3 数据文件（同目录）
+**C. 窗口外的旧文（updated-only，2 篇）**：`2603.25530`（Functional Tucker 子空间建模）、`2603.25255`（高光谱轨迹异常检测）——2026-03/01 首发、本期 9 月末更新，主题不属超分/分类。
 
-- `papers-2026-10-02.json`（16 次查询解析结果，902 篇去重）
-- `window-2026-10-02.json`（窗口内 20 篇：新增 15、更新 5）
-- `candidates-2026-10-02.json`（464 个会议匹配候选）
-- `conf_fragment-2026-10-02.md`（conf_match.py 原始输出，本节上方的「会议论文」为原样粘贴）
-- `verify-2026-10-02.json`（12/12 arXiv ID 复核记录）
-- `cvf-abstracts-2026-10-02.json`（6 篇 CVPR 论文页摘要原文）
+**D. SAR / 雷达**：本期窗口 16 篇候选中 **0 篇**命中排除词表（`polsar / insar / synthetic aperture radar / radar imaging / microwave radiometer`）。此前处理过的 Lake/UK SAR-光学异源变化检测（`2609.32716`）不在本期 7 天窗口内。
+
+**E. 未使用的来源**：本期只用 **arXiv API + CVF（openaccess.thecvf.com）**。**未使用 Semantic Scholar、Papers with Code、Hugging Face**，因此对它们的榜单/趋势不作任何断言。
+
+---
+
+## 七、可复现性与验证记录
+
+| 项 | 结果 |
+|---|---|
+| arXiv 查询 | 20 条，**20/20 HTTP 200**，无 429/503（≥3.6 s 间隔，curl 传输，显式 `--max-time 30`） |
+| 去重后论文数 | 708（跨查询 base-id 去重） |
+| 窗口内候选 | **16**（new 13 / updated-only 3） |
+| 有效窗口（实测） | `u_hsi` 无界查询最新一篇为 **2026-09-30**，跨度回至 2026-01-18 → 说明存在约 2 天公告延迟，**本期无 10-01/10-02 的 arXiv 新文**（是延迟，不是漏抓） |
+| 筛选 | `radar_filter.py`：16 → **2**（stderr: `candidates in: 16 | kept: 2 | dropped: 14`） |
+| 会议 | `conf_match.py`：候选 16 × 索引 4,042 → 匹配 0；spotlight 首次纳入 **3** |
+| arXiv ID 复核 | 7/7（`2609.35410` `2601.21338` `2609.39926` `2609.39871` `2609.37340` `2603.07918` `2603.00920`），标题与日期全对 |
+
+**工作文件**（`E:/tool/Hermes/cache/scratch/rs-radar/`）：`fetch-2026-10-02b.py`、`gen_candidates-2026-10-02b.py`、`diagnose-2026-10-02b.py`、`verify-2026-10-02b.py`、`papers-2026-10-02b.json`、`window-2026-10-02b.json`、`candidates-2026-10-02b.json`、`kept-2026-10-02b.json`、`filter_fragment-2026-10-02b.md`、`conf_fragment-2026-10-02b.md`、`verify-2026-10-02b.json`。
+
+*纪律声明：本报告区分来源事实与推断——凡标注「原文事实/摘要级」的内容直接来自 arXiv 摘要或 CVPR 页面；凡标注「推断/我的审查建议」的内容是本报告的判断，不是论文结论。未获取的信息一律不补。*
