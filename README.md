@@ -1,55 +1,56 @@
-# 高光谱研究雷达日报 · 2026-10-04（第 3 期）
+# 高光谱研究雷达日报 · 2026-10-05（第 4 期）
 
 ## 来源与窗口
 
-- **arXiv**（365 天窗口，`sortBy=relevance`，每查询 `max_results=300`）：**今日新扫 11 条查询全部被限流**——返回 14/126 字节的 `Rate exceeded.`（HTTP 429），另有多条 60 s 零字节挂起；冷却 150 s 后用 22 s 间隔重试 3 条，仍 **0/3 成功**。按既定预案**放弃今日新扫、改用昨日 365 天缓存池**，故今日新扫**新增 0 篇**。
-- 候选池 = **2026-10-03 缓存的 365 天池（202 篇）** ∪ 今日新扫（0 篇），去重后仍 **202 篇**。池内最新 `published` 仍是 **2026-09-30**，与昨日一致——这是 arXiv 公告批次延迟（窗口上界 2026-10-04，实际公告只到 09-30），**不是漏筛**。真实有效窗口：**2025-10-03 → 2026-09-30**。
-- **CVF**：CVPR2026 本地索引 **4,042** 条（缓存命中，未重下），本期只做离线匹配。
-- 策略冻结与运行健康：`selftest 18/18 passed`；`radar_filter.py 66877f5979fe` / `radar_keywords.py d405ccb11486` / `search_keywords.txt 4382dbe26daf` —— **与上一期完全一致，运行期间未修改任何策略文件**（三个哈希与上一期报告相同，计数可与上一期直接比较）。
+- **arXiv：本期按硬性限制未做任何新扫**（连续多日限流；上一期死于一个 7,431 s 的 fetch 被 watchdog 杀掉）。本期使用**本地 365 天缓存池** `candidates-2026-10-04.json`（**202 篇**；文件内 `generated_at = 2026-10-04`，`fresh_sweep_status` 自记为「11 条查询全部 HTTP 429（Rate exceeded.），新增 0 行」）。
+- 池口径（实测）：`published` 跨度 **2025-10-03 → 2026-09-30**（= 本报告的真实有效窗口），`updated` 跨度 2025-10-07 → 2026-09-30；其中 `published ≥ 2026-09-01` 的近期投稿 **26 篇**。池与上一期是**同一份、未变化**，故「候选 202」与上一期可直接比较。
+- **CVF**：CVPR2026 本地索引 **4,042** 条（2026-10-02 缓存，未重下），本期只做离线匹配。
+- 策略冻结与运行健康：`selftest 18/18 passed`；`radar_filter.py 66877f5979fe` / `radar_keywords.py d405ccb11486` / `search_keywords.txt 4382dbe26daf` —— **与上一期三个哈希完全一致，运行期间未修改任何策略文件**，计数可与上一期直接比较。
+- 去重状态：seen-state 由 **30 → 40**（本期写入 10 篇）。
 
 ## 本期要点
 
-1. **排序修复后的第二个完整期：本期 10 篇并列相关度 84，改动的是「平局怎么破」。** 相关度评分是粗粒度的，纯分类/纯超分、标题级命中的上限就是 84。本期过筛池未推送的 103 篇里，**32 篇并列 84**，两键排序 `(-relevance, -updated)` 取其中**更新时间最新 10 篇**；第 11 位仍是 84（更新 2026-04-28），说明截断发生在相关度平局内部，而非跨档降级——这是设计预期，不是漏筛。
-2. **C 组（超分+分类交叉项）本期 0 篇** —— 365 天窗口下 123 篇过筛里再次无一命中交叉词形，是真实空缺。
-3. **A/B 仍是主战场**：123 篇过筛中 A 组 42 篇、B 组 59 篇、D 组 18 篇（D 内部：基础模型/预训练 15、仅适配 2、两者兼有 1）；本期新推 10 篇里 **A 组 2 篇、B 组 8 篇、D 组 0 篇**。
-4. **可复现性回暖**：本期 10 篇中 A 档（代码+数据）**0** 篇、B 档（仅代码）**4** 篇 —— 4 个仓库全部 HTTP 验活 200；B 档 4 篇里有 3 篇是分类侧、1 篇是超分侧（SDANet），后者是本轮最值得先跑的超分实现。
-5. **效率导向的分类开始成组出现**：本期 8 篇分类里，BCG-Former（Pareto 效率）、MixerSENet（53k 参数）、DSCC（197 FPS）、SpectralTrain（2–7× 训练提速）都在打「精度–成本」权衡，而非单纯刷 OA —— 这是本方向近期一个可见的移动。
+1. **本期是「平局截断」的一期**：入选 10 篇**全部相关度 84**；未推送的 83 篇里 **12 篇并列 84**，两键排序 `(-relevance, -updated)` 取其中**更新最新的 10 篇**（2026-04-28 → 2026-03-05）。排名第 11 位仍是 84，但其更新时间是 **2025-10-08**，直接跳到上一年批次——说明截断发生在**相关度平局内部**，不是跨档降级，也不是漏筛（设计预期）。
+2. **C 组（超分+分类交叉项）本期 0 篇** —— 365 天窗口、123 篇过筛里再次无一命中交叉词形，**本期无交叉项**（连续第 4 期）。
+3. **A/B 仍是主战场**：123 篇过筛中 A 组 **42**、B 组 **59**、D 组 **18**（D 内部：基础模型/预训练 15、仅适配 2、两者兼有 1）；本期新推 10 篇 = **A 组 2 篇、B 组 8 篇、C/D 组 0 篇**。
+4. **可复现性**：10 篇中 A 档（代码+数据）**0**、B 档（仅代码）**6**、C 档（未声明）**4**；6 个仓库**全部 HTTP 验活 200**（见文末）。
+5. **「解混」在新推论文里同时出现在超分与分类两侧**：`2601.22755` 把丰度当作**超分的工作域**（合成丰度、无监督），`2604.09948` 把丰度当作**分类的 token 组织依据**（聚类 Top-K + 多任务）——两侧各有一块，却没人把它们接成一条链。这是补 C 组空缺最直接的现成材料（见选题 1、2）。
 
 ## 筛选结果
 
 ## 高光谱筛选结果（365 天窗口 + 去重）
 
-- 拉取候选 **202** 篇 → 通过关键词策略 **123** 篇 → 已推过（去重剔除）**20** 篇 → **本期新推 10 篇**（另有 93 篇通过但未进前十，留待后续）
+- 拉取候选 **202** 篇 → 通过关键词策略 **123** 篇 → 已推过（去重剔除）**30** 篇 → **本期新推 10 篇**（另有 83 篇通过但未进前十，留待后续）
 - 过滤规则：标题或摘要需同时命中 `hyperspectral / HSI` 与 A/B/C/D 关键词之一；pansharpening、multispectral 单独出现不算；SAR/雷达类无条件剔除
 - 排序：与「超分+分类」方向的相关度（主）+ 更新时间（仅用于打破相近分数的平局），**不按投稿时间**
 
-- 可复现性：**A（代码+数据）0 篇** / B（仅代码）4 篇 / C（未声明）6 篇　— 由摘要 + arXiv comment 判定，C 表示「未声明」而非核实不存在
+- 可复现性：**A（代码+数据）0 篇** / B（仅代码）6 篇 / C（未声明）4 篇　— 由摘要 + arXiv comment 判定，C 表示「未声明」而非核实不存在
 
 | # | 标题 | arXiv | 相关度 | 更新时间 | 可复现性 |
 |---|---|---|---|---|---|
-| 1 | Fermat Active Laplace Learning for Semi-Supervised Hyperspectral Image Classification | 2608.02483v1 | 84 | 2026-08-03 | C |
-| 2 | USP-Mamba: Unmixing-Derived Spectral and Structural Prompting for Hyperspectral Image Super-Resolution | 2608.02401v1 | 84 | 2026-08-03 | C |
-| 3 | HyperImageNet: A Large-Scale High-Spatial Resolution Hyperspectral Imagery Classification Benchmark | 2607.21050v2 | 84 | 2026-07-27 | C |
-| 4 | BCG-Former: Toward Pareto-Efficient Hyperspectral Image Classification via Band-Contextual Gating | 2607.15639v1 | 84 | 2026-07-17 | C |
-| 5 | DAPGNet: Dynamic Adaptive Physics-Guided Graph Diffusion Network for Hyperspectral Image Classification | 2607.15128v1 | 84 | 2026-07-16 | C |
-| 6 | MixerSENet: A Lightweight Framework for Efficient Hyperspectral Image Classification | 2606.01700v1 | 84 | 2026-06-01 | B |
-| 7 | SpectralTrain: A Universal Framework for Hyperspectral Image Classification | 2511.16084v3 | 84 | 2026-05-29 | B |
-| 8 | SoDa2: Single-Stage Open-Set Domain Adaptation via Decoupled Alignment for Cross-Scene Hyperspectral Image Classification | 2605.03371v1 | 84 | 2026-05-05 | C |
-| 9 | Hyperspectral Image Classification via Efficient Global Spectral Supertoken Clustering | 2604.27364v1 | 84 | 2026-04-30 | B |
-| 10 | Spectral Dynamic Attention Network for Hyperspectral Image Super-Resolution | 2604.27326v1 | 84 | 2026-04-30 | B |
+| 1 | MixerCA: An Efficient and Accurate Model for High-Performance Hyperspectral Image Classification | 2604.26138v1 | 84 | 2026-04-28 | B |
+| 2 | A Synergistic CNN-Transformer Network with Pooling Attention Fusion for Hyperspectral Image Classification | 2604.23622v1 | 84 | 2026-04-26 | B |
+| 3 | Synthetic Abundance Maps for Unsupervised Super-Resolution of Hyperspectral Remote Sensing Images | 2601.22755v2 | 84 | 2026-04-21 | B |
+| 4 | ConvVitMamba: Efficient Multiscale Convolution, Transformer, and Mamba-Based Sequence modelling for Hyperspectral Image Classification | 2604.18856v1 | 84 | 2026-04-20 | B |
+| 5 | Unmixing-Guided Spatial-Spectral Mamba with Clustering Tokens for Hyperspectral Image Classification | 2604.09948v1 | 84 | 2026-04-10 | B |
+| 6 | Cross-Domain Few-Shot Learning for Hyperspectral Image Classification Based on Mixup Foundation Model | 2601.22581v2 | 84 | 2026-04-07 | B |
+| 7 | Physics-Informed Untrained Learning for RGB-Guided Superresolution Single-Pixel Hyperspectral Imaging | 2604.03572v1 | 84 | 2026-04-04 | C |
+| 8 | LGEST: Dynamic Spatial-Spectral Expert Routing for Hyperspectral Image Classification | 2603.24045v1 | 84 | 2026-03-25 | C |
+| 9 | 3D Fourier-based Global Feature Extraction for Hyperspectral Image Classification | 2603.16426v1 | 84 | 2026-03-17 | C |
+| 10 | A Benchmark Study of Neural Network Compression Methods for Hyperspectral Image Classification | 2603.04720v1 | 84 | 2026-03-05 | C |
 
 **可复现性判定依据**
 
-- 1. `C` — 摘要与 comment 均未声明代码/数据
-- 2. `C` — 摘要与 comment 均未声明代码/数据
-- 3. `C` — 摘要与 comment 均未声明代码/数据
-- 4. `C` — 摘要与 comment 均未声明代码/数据
-- 5. `C` — 摘要与 comment 均未声明代码/数据
-- 6. `B` — code: github.com/mqalkhatib/MixerSENet
-- 7. `B` — code: github.com/mh-zhou/SpectralTrain
+- 1. `B` — code: github.com/mqalkhatib/MixerCA
+- 2. `B` — code: github.com/chenpeng052/SCT-Net.git
+- 3. `B` — code: github.com/xinxinxu99/SISR-DL.git
+- 4. `B` — code: github.com/mqalkhatib/ConvVitMamba
+- 5. `B` — code: github.com/GSIL-UCalgary/Unmixing_guided_Mamba.git
+- 6. `B` — code: github.com/Naeem-Paeedeh/MIFOMO
+- 7. `C` — 摘要与 comment 均未声明代码/数据
 - 8. `C` — 摘要与 comment 均未声明代码/数据
-- 9. `B` — code: github.com/laprf/DSCC
-- 10. `B` — code: github.com/oucailab/SDANet
+- 9. `C` — 摘要与 comment 均未声明代码/数据
+- 10. `C` — 摘要与 comment 均未声明代码/数据
 
 **被过滤（前 12 条，附原因）**
 
@@ -70,104 +71,111 @@
 ## 分组（本期 10 篇）
 
 - **① 超分+下游任务联合优化（C 组）：0 篇** —— **本期无交叉项**。
-- **② 纯高光谱超分（A 组）：2 篇** —— USP-Mamba `2608.02401v1`、SDANet `2604.27326v1`。
-- **③ 纯高光谱分类（B 组）：8 篇** —— Fermat Active Laplace `2608.02483v1`、HyperImageNet `2607.21050v2`、BCG-Former `2607.15639v1`、DAPGNet `2607.15128v1`、MixerSENet `2606.01700v1`、SpectralTrain `2511.16084v3`、SoDa2 `2605.03371v1`、DSCC Supertoken `2604.27364v1`。
+- **② 纯高光谱超分（A 组）：2 篇** —— Synthetic Abundance Maps `2601.22755v2`、Physics-Informed Untrained Learning `2604.03572v1`。
+- **③ 纯高光谱分类（B 组）：8 篇** —— MixerCA `2604.26138v1`、SCT-Net `2604.23622v1`、ConvVitMamba `2604.18856v1`、Unmixing-Guided Mamba `2604.09948v1`、MIFOMO `2601.22581v2`、LGEST `2603.24045v1`、HGFNet `2603.16426v1`、NN Compression Benchmark `2603.04720v1`。
 - **④ 高光谱基础模型 / 高效微调（D 组，分两半）：0 篇**
   - **基础模型 / 预训练 / 表征学习：0 篇**
   - **高效微调 / 适配：0 篇**
-- **⑤ benchmark / 数据集：** HyperImageNet 是 benchmark，但它同时命中 B 组，故按优先组归入 ③（不重复计）。
+- **⑤ benchmark / 数据集：** `2603.04720`（压缩方法基准研究）与 `2604.18856`（含 3 个 UAV QUH 数据集）**同时命中 B 组**，按优先组归入 ③（不重复计）。
 - **⑥ 其他高光谱：0 篇。**
+- 一条来源事实（非推断）：入选的 MIFOMO `2601.22581` 摘要是 "remote sensing (RS) foundation model"，**未命中 D 组词形**（D 组要求 `hyperspectral foundation model` 等），故归 ③。这是既定词表的确定行为，不是漏筛。
 
 ## Top 3 精读（摘要级，未抓 PDF）
 
-### 1. USP-Mamba: Unmixing-Derived Spectral and Structural Prompting for Hyperspectral Image Super-Resolution
-`2608.02401v1` · rel **84** · 更新 2026-08-03 · 可复现性 **C**（未声明）
+挑选说明：本期 10 篇中 8 篇为纯分类，故 Top 3 取「**相关度第一的分类基线** + **唯一带代码的纯超分** + **唯一把解混与分类耦合的多任务工作**」，并跳过与 MixerCA 同族的 SCT-Net（rank 2，纯分类）。
 
-- **问题**：Mamba 类 HSI 超分模型受两点制约 ——（a）因果序列建模必须把二维高光谱特征沿固定扫描顺序展开，破坏空间邻接、限制上下文传播；（b）状态空间参数主要来自通用可学表示，**没有显式对齐高光谱自身的物理特性**。
-- **方法**：USP-Mamba —— 用**解混派生的提示**驱动 Mamba 状态演化。① *解混信息谱提示*：捕捉输入图像的整体物质组成，在重建全程提供持续条件，并逐层自适应；② *特征级结构提示*：空间分量（增强局部细节的结构敏感状态编码）+ 频率分量（在同质区/高频细节间做区域自适应切换）；③ 互补的 **Hilbert 扫描**与**语义引导邻域扫描**，兼顾空间连续性与非局部语义依赖。
-- **证据**：多个数据集上「一致优于代表性方法」（摘要未给出具体 PSNR 数值）。
-- **局限**：**摘要无量化数字**（无法核验增益幅度）；无跨传感器/跨区域验证；未声明代码；无推理成本报告。
-- **可延伸**：把「解混提示」当成 **SR 与分类共享的物理瓶颈**——解混（端元/丰度）本就是分类侧的经典先验，但目前几乎无人把它同时接到 SR 与下游分类上（见选题 1，正好补 C 组空缺）。
+### 1. MixerCA: An Efficient and Accurate Model for High-Performance Hyperspectral Image Classification
+`2604.26138v1` · rel **84** · 更新 2026-04-28 · 可复现性 **B**（code: github.com/mqalkhatib/MixerCA）
 
-### 2. HyperImageNet: A Large-Scale High-Spatial Resolution Hyperspectral Imagery Classification Benchmark
-`2607.21050v2` · rel **84** · 更新 2026-07-27 · 可复现性 **C**（未声明）
+- **问题**：HSI 分类要在多波段、少标注下同时拿精度与低算力。
+- **方法**：MixerCA —— 用**深度可分离卷积 + 自注意力**统一成一个轻量结构：token mixing 与 channel mixing 解耦空间/通道交互，coordinate attention 补位置信息，**全网络保持一致分辨率**并直接处理 HSI patch（不走主流的下采样—上采样）。
+- **证据**：四个高光谱基准上对 2D-CNN / 3D-CNN / Tri-CNN / HybridSN / ViT / Swin Transformer 称有明确优势（**摘要未给数值**）。
+- **局限**：纯分类、无超分；摘要**无量化数字**；未报告参数量/延迟（「efficient」未量化）；无跨传感器验证；is 期刊 preprint（RSASE），非会议。
+- **可延伸**：其「一致分辨率 + 通道/token 解耦」正是超分主干常用的形态——把 MixerCA 直接当 SR 输出上的分类头，是构造 C 组实验的最低成本途径（选题 3 的对照）。
 
-- **问题**：现有高光谱分类基准要么类别少、要么缺像素级/实例级标注，难以评测**细粒度**地物理解与**开放环境**（严格空间分离）泛化。
-- **方法/数据**：**26,084** 个机载高光谱图块、**224 波段**、**138 个细粒度地物类别**；同时提供**原始影像 + 像素级语义标签 + 物体级实例掩码**（支持语义分割与实例分割）；建立**严格空间分离**的开放环境基准，评测代表性方法与 **HyperFree** 基础模型。
-- **证据**：摘要称实验验证了 HyperImageNet 对细粒度高光谱理解与开放环境遥感研究的有效性（未列具体数值）。
-- **局限**：仅机载（缺星载）；138 类必然**长尾**，但摘要未给类分布/长尾指标；代码与数据**未声明**（作为 benchmark，数据可得性是关键，需进一步确认）。
-- **可延伸**：138 类 + 长尾 + 严格空间分离，正好是检验「光谱基础模型能否顶住细粒度长尾」的现成标尺（见选题 2）。
+### 2. Synthetic Abundance Maps for Unsupervised Super-Resolution of Hyperspectral Remote Sensing Images
+`2601.22755v2` · rel **84** · 更新 2026-04-21 · 可复现性 **B**（code: github.com/xinxinxu99/SISR-DL）
 
-### 3. SpectralTrain: A Universal Framework for Hyperspectral Image Classification
-`2511.16084v3` · rel **84** · 更新 2026-05-29 · 可复现性 **B**（仅代码）
+- **问题**：HS-SISR 主流方法是**监督**的，需要高分辨 GT；真实场景往往拿不到。
+- **方法**：**无监督**框架 —— ①先把 LR HSI 解混为端元 + 丰度；②用**死叶模型**合成丰度图（统计特性继承自待超分的 LR 图像，并利用已知的**传感器 PSF**）；③只用合成丰度训练网络做**丰度超分**；④推理时把超分丰度与端元重组回高分 HSI。**训练全程不需要 HR 参考**。
+- **证据**：3 个数据集 × 3 个缩放因子 × 多指标，验证合成数据的训练价值与方法的有效性（摘要未列具体 PSNR/SSIM）。
+- **局限**：**强依赖解混质量与 PSF 已知**（PSF 估计不准即分布偏移）；无监督设定下 PSNR 类有参考指标的可信度显著下降；未报告跨传感器泛化；大缩放因子下无监督方法普遍退化。
+- **可延伸**：这条「解混 → 丰度超分 → 重组」链天然能为分类提供**无需 GT 的高分输入**，而 `2604.09948` 已证明「丰度 → 聚类 token → 分类」可行——两者拼接即 C 组的现成骨架（选题 1、2）。
 
-- **问题**：HSI 分类训练数据大、算力昂贵，限制深度学习在真实遥感任务上的落地。
-- **方法**：SpectralTrain —— **架构无关**的通用训练框架，把**课程学习**（逐步引入光谱复杂度）与**基于 PCA 的光谱降采样**结合；与具体架构/优化器/损失函数解耦，兼容经典与 SOTA 模型。
-- **证据**：三个基准数据集（Indian Pines、Salinas-A、新提出的 **CloudPatch-7**）上跨空间尺度/光谱特性/应用域一致有效，**训练提速 2–7×**，精度仅小幅到中等下降（视主干而定）；并把它用到云分类，指向气候遥感。
-- **局限**：是**训练策略**类贡献而非新架构，收益取决于主干；精度有代价（摘要未量化每主干的具体降幅）；CloudPatch-7 为新数据集，可比性有限。
-- **可延伸**：把「PCA 光谱降采样 + 课程学习」这一**训练侧提速**直接搬到 **HSI 超分**的训练上（超分训练通常更贵），验证能否在 PSNR 基本持平下大幅缩短训练——这是本方向少见的、低门槛且立刻可跑的切入（见选题 3 的备选路线）。
+### 3. Unmixing-Guided Spatial-Spectral Mamba with Clustering Tokens for Hyperspectral Image Classification
+`2604.09948v1` · rel **84** · 更新 2026-04-10 · 可复现性 **B**（code: github.com/GSIL-UCalgary/Unmixing_guided_Mamba）
+
+- **问题**：光谱混合效应、空间—光谱异质、类边界与细节难以保持。
+- **方法**：①光谱解混网络，自学习端元与丰度并显式建模**端元可变性**；②按丰度图的聚类定义 **Top-K token 选择**，自适应排序 Mamba 序列；③**解混引导的空间—光谱 Mamba 模块**；④**多任务监督**（端元—丰度 + 分类标签），同时输出分类图、光谱库与丰度图。
+- **证据**：四个 HSI 数据集上称显著优于 SOTA（摘要未给数值）。
+- **局限**：任务仍是**分类**（不是 SR）；多任务权重需调；Mamba 序列排序对 token 选择敏感；未报告推理成本；仅声明代码、未声明数据。
+- **可延伸**：它把「解混 + 聚类 + 多任务」做成了分类侧工具；若让其丰度场与 `2601.22755` 的超分丰度**共享**，就是「SR 与分类共享物理瓶颈」的联合框架（选题 2）。
 
 ## 3 个可做选题
 
-### 选题 1：解混提示驱动的「超分↔分类」联合框架（直补 C 组空缺）
-- **Problem**：C 组（超分与分类联合优化）在 365 天窗口内**连续两期 0 篇**；而本期 `2608.02401` 已证明**解混先验能有效引导超分**，`2604.27364`/`2608.02483` 又分别给出 token 级/半监督的分类侧工具，却无人把解混当作**SR 与分类共享的物理瓶颈**。
-- **Hypothesis**：以端元/丰度为共享中间表示、联合优化 SR 与分类，在低标注预算下的分类增益**显著大于**「先 SR 再分类」的解耦流程。
-- **Method sketch**：SR 主干用 `2608.02401` 的 USP-Mamba 解混谱提示（提供共享丰度场）→ 分类头接 `2604.27364` 的 token 级预测（丰度超像素）；对照「解耦两阶段」与「联合训练」，加消融「提示是否共享」。
-- **数据与指标**：Pavia University、Chikusei、WHU-Hi-LongKou；SR 报 PSNR/SSIM/SAM，分类报 OA/AA/Kappa，重点报「SR 误差 → 分类增益」的传导曲线与 1%/5% 标注预算下的差异。
-- **Baselines**：USP-Mamba（纯 SR）、SDANet、DSCC（纯分类）、解耦 SR→分类、无 SR 直接分类。
-- **最小可证伪实验**：单数据集、1% 标注下比较「共享解混瓶颈的联合训练」vs「解耦」，若 OA 差在 3 个随机种子下均 <0.3%，假设不成立。
-- **Risk**：C 组稀疏可能说明该方向本身收益有限（本期最需警惕的反证）；联合训练调参成本高；解混质量差时会同时拖累两侧。
+### 选题 1：无监督合成丰度超分 → 低标注/跨域分类（补 C 组空缺的轻量路线）
+- **Problem**：C 组连续 4 期 0 篇；本期同时出现「无监督丰度超分」`2601.22755`（训练无需 HR GT）与「跨域少样本分类」`2601.22581`（跨域标注昂贵）。二者互不解决对方的问题：超分不评测分类增益，分类固定输入分辨率。
+- **Hypothesis**：用 `2601.22755` 的无监督 SR 提升分辨率后接分类，在低标注（1%/5%）与跨域设定下，其分类增益**显著大于**「监督 SR 预处理」或「不超分直接分类」，且**不需要目标域 HR GT**。
+- **Method sketch**：LR HSI → 解混 → 合成丰度训练丰度超分网络（`2601.22755`）→ 重组 HR HSI → 分类头（MixerCA `2604.26138`；跨域时用 MIFOMO `2601.22581` 的冻结骨干 + coalescent projection）。对照：无 SR / 监督 SR / 无监督 SR。消融：PSF 是否准确（注入 PSF 误差）。
+- **数据与指标**：Pavia University、Chikusei、WHU-Hi-LongKou；SR：PSNR/SSIM/SAM/ERGAS，分类：OA/AA/Kappa + 每类召回；重点是「SR 质量 → 分类增益」传导曲线 + 跨传感器（Pavia→Chikusei）。
+- **Baselines**：SISR-DL `2601.22755`、动态稀疏注意力 CNN-SR、无 SR 分类、监督 SR + 分类。
+- **最小可证伪实验**：单数据集、5% 标注，比较「无监督 SR + 分类」vs「不超分 + 分类」；若 OA 差在 3 个随机种子下均 <0.5%，假设不成立。
+- **Risk**：无监督 SR 的伪影可能被分类器放大；跨传感器 PSF 假设失效即退化；C 组长期为空本身可能说明该联结收益有限（**本期最需警惕的反证**）。
 
-### 选题 2：138 类细粒度长尾高光谱分类（HyperImageNet 起步）
-- **Problem**：新基准 `2607.21050` 提供 138 类、严格空间分离的细粒度分类，但摘要未给长尾指标，现有分类器（本期多为 ~10 类标准集上的方法）在长尾细粒度上的退化程度未知。
-- **Hypothesis**：现有 SOTA 分类器在 HyperImageNet 上的**宏平均（macro-F1/per-class recall）会显著低于总体精度**，且光谱基础模型（HyperFree）相对传统 CNN/Transformer 的领先在长尾类上更明显。
-- **Method sketch**：在 HyperImageNet 上做「解耦表征 + 原型/长尾重加权」的基线改造（可用 `2604.27364` 的 soft-label 超像素方案处理混合类），对比 3D-CNN / Mamba / 基础模型微调。
-- **数据与指标**：HyperImageNet（主）、Pavia/WHU-Hi（迁移）；OA/AA/Kappa + macro-F1 + 每类召回 + 类频分层报告。
-- **Baselines**：HyperFree、BCG-Former `2607.15639`、MixerSENet `2606.01700`、DSCC `2604.27364`。
-- **最小可证伪实验**：只测 3 个分类器在 HyperImageNet 上的 OA 与 macro-F1 差值；若差值 <2 个百分点，长尾假设弱化。
-- **Risk**：基准数据/代码未声明，可能需向作者索要；138 类标注噪声未知；若数据不可得则该方向直接受阻（需先确认可得性）。
+### 选题 2：共享解混瓶颈的「超分 × 分类」联合框架
+- **Problem**：`2604.09948` 证明解混 + 多任务能提升分类，`2601.22755` 证明丰度可作超分的工作域；但无人把**同一套端元/丰度**同时接到 SR 与分类上——这正是 C 组本身。
+- **Hypothesis**：以端元/丰度为共享中间表示联合优化 SR 与分类，在低标注下分类增益显著大于「先 SR 再分类」的解耦流程，且联合训练使丰度估计更准（互相正则）。
+- **Method sketch**：主干用 `2601.22755` 的丰度超分（产出超分丰度场）；分类侧接 `2604.09948` 的 Top-K 聚类 token + 多任务损失；共享解混模块。对照：解耦两阶段 / 共享 vs 不共享丰度 / 只 SR / 只分类。
+- **数据与指标**：Pavia University、Chikusei、WHU-Hi-LongKou；SR：PSNR/SSIM/SAM；分类：OA/AA/Kappa；额外报丰度解混误差（SAD/RMSE）以验证「互相正则」。
+- **Baselines**：`2601.22755`（纯 SR）、`2604.09948`（纯分类）、解耦 SR→分类、无 SR 直接分类。
+- **最小可证伪实验**：单数据集、1% 标注，「共享丰度瓶颈的联合训练」vs「解耦」；若 OA 差在 3 个种子下均 <0.3% 且丰度 SAD 无改善，假设不成立。
+- **Risk**：联合训练调参成本高；解混差会同时拖累两侧；C 组稀疏是反证信号。
 
-### 选题 3：把「效率-精度 Pareto」从分类搬到高光谱超分
-- **Problem**：本期分类侧已形成 Pareto 视角（BCG-Former 亚毫秒、MixerSENet 53k 参数、DSCC 197 FPS），但**超分侧几乎无**「少参数 + 低延迟」的工作（本期 2 篇 SR 均未报告推理成本）。
-- **Hypothesis**：把 band-contextual gating（`2607.15639` 的 BCG）与线性注意力搬到 SR 主干，能在 PSNR 基本持平的前提下把参数量/延迟压到当前 SR 方法的 1/5 以下。
-- **Method sketch**：以 SDANet `2604.27326`（动态通道稀疏注意力）为起点，替换其通道注意力为 BCG 式的局部带间门控；加单遍 Band-RoPE + 线性注意力做高效联合表示；消融换掉各组件。
-- **数据与指标**：Pavia University、Chikusei（HSI-MSI 融合设定）；PSNR/SSIM/SAM/ERGAS + 参数量 + 单图推理延迟。
-- **Baselines**：SDANet、USP-Mamba、经典 CNN-SR。
-- **最小可证伪实验**：单数据集替换注意力模块，看延迟是否下降 ≥3× 且 PSNR 下降 <0.2 dB；否则假设不成立。
-- **Risk**：SR 的精度对注意力替换可能敏感，效率收益或被重构损失掩盖；Pareto 基准本身容易被质疑为工程调优，需严格控制变量并公开延迟测量协议。
+### 选题 3：把「效率—精度」评估搬到高光谱超分（可部署 SR 基准）
+- **Problem**：分类侧已出现成组的效率工作（MixerCA 轻量、ConvVitMamba 轻量 Mamba、LGEST 稀疏专家路由），并有 `2603.04720` 专门评测剪枝/量化/蒸馏；而**超分侧**本期两篇（含 `2604.03572` 的免训练框架）均未报告参数量/延迟/显存——超分侧缺一份可部署性对照。
+- **Hypothesis**：把 `2603.04720` 的压缩流程（pruning / quantization / distillation）直接施于现有 HSI-SR 主干，可在 PSNR 下降 <0.2 dB 内把参数量压到 1/4、延迟压到 1/3。
+- **Method sketch**：以 `2601.22755` 的丰度超分网络与一个 CNN/Mamba SR 主干为对象，逐一施加剪枝/量化/蒸馏，测精度—成本 Pareto；给出统一延迟协议（batch=1、固定分辨率、同 GPU）。
+- **数据与指标**：Pavia University、Chikusei；PSNR/SSIM/SAM/ERGAS + 参数量 + FLOPs + 单图延迟 + 显存。
+- **Baselines**：未压缩 SR 主干、`2601.22755`、经典 CNN-SR。
+- **最小可证伪实验**：单数据集、单主干做 INT8 量化；若延迟下降 <2× 或 PSNR 下降 >0.5 dB，假设不成立。
+- **Risk**：易被质疑为纯工程调优；量化的精度损失对光谱维度敏感；须严格控制变量并公开测量协议。
 
 ## 会议论文（CVPR2026，本地索引离线匹配）
 
-- 本期入选 10 篇中，**0 篇**同时有 CVPR2026 版本（本期多为 2026 年 4–8 月新投的分类/超分 preprint，尚无会议版）。
-- 放回全池口径：**202 个候选命中 5 篇**同时有会议版本（与上一期相同，池未变）——分别是视频级压缩光谱重建、多光谱→NASA 高光谱的光谱超分、抗光谱漂移的双门控 MoE、无配准 HSI 超分（UAFL，上期已推）、以及一篇超表面相机（仪器类）。
-- **会议新进榜（spotlight）：0 篇。** CVPR2026 的 seen-state 已于 2026-10-02 被消费，这是该模块的一次性设计，不是匹配失效。
+- 本期入选 10 篇中，**0 篇**同时有 CVPR2026 版本（多为 2026 年 3–4 月新投的分类/超分 preprint，尚无会议版）。
+- 放回全池口径：**202 个候选命中 5 篇**同时有会议版本（与上一期相同，池未变）——视频级压缩光谱重建、多光谱→NASA 高光谱的光谱超分、抗光谱漂移的双门控 MoE、无配准 HSI 超分（UAFL，上期已推）、超表面快照相机（仪器类）。
+- **会议新进榜（spotlight）：0 篇。** CVPR2026 seen-state 已于 2026-10-02 被消费（3 条），这是该模块的一次性设计，不是匹配失效。
 
 ## 排除说明
 
-- 默认排除 SAR/雷达类：`UniDiff`（PEFT + 地物分类）因摘要含 synthetic aperture radar 被**无条件剔除**。
-- 仪器/传感器类：`SpectralCA`、`HAMscope`（快照自体荧光显微）、`Visible to Longwave-infrared imaging via an inverse-designed monolithic lens` 等，唯一话题证据是 `spectral imaging`，判为仪器排除。
-- 门禁/话题未命中：`A UAV-Based VNIR Hyperspectral Benchmark Dataset for Landmine and UXO Detection`（有高光谱但未命中 A/B/C/D）、`SWAN`（自监督小波解混）、`DeepSalt`、`A Provably-Correct and Robust Convex Model for Smooth Separable NMF` 等未命中 A/B/C/D 词形。
-- 门禁未满足：`AION-1`（天文全模态基础模型）、`Burst Image Quality Assessment` 未出现 hyperspectral/HSI。
+- 默认排除 SAR/雷达类：`UniDiff`（PEFT + 地物分类）与 `SpectralEarth-FM`（高光谱多模态预训练）因摘要含 **synthetic aperture radar** 被**无条件剔除**。
+- 仪器/传感器类：`SpectralCA`、`HAMscope`（快照自体荧光显微）、`MetaSpectra+`（超表面相机）、`Visible to Longwave-infrared imaging via an inverse-designed monolithic lens` 等，唯一话题证据是 `spectral imaging`，判为仪器排除。
+- 门禁/话题未命中：`A UAV-Based VNIR Hyperspectral Benchmark Dataset for Landmine and UXO Detection`（有高光谱但未命中 A/B/C/D）、`SWAN`（自监督小波解混）、`Self-Supervised Super-Resolution for Sentinel-5P Hyperspectral Images`、`HSI-VAR`、`HyperCOD` 等。
+- 门禁未满足：`AION-1`（天文全模态基础模型）、`Burst Image Quality Assessment`、`S3-CLIP` 未出现 hyperspectral/HSI。
 - 上述规则由 `search_keywords.txt` 单一真相源执行，本期未改动任何策略文件。
 
 ### 本期可复现（A/B 档，便于先跑）
 
-- A（代码+数据）**0** 篇 ／ B（仅代码）**4** 篇 ／ C（未声明）6 篇
+- A（代码+数据）**0** 篇 ／ B（仅代码）**6** 篇 ／ C（未声明）4 篇
 
 | 标题 | arXiv | 档 | 依据 |
 |---|---|---|---|
-| MixerSENet: A Lightweight Framework for Efficient Hyperspectral Image Classification | 2606.01700v1 | B | code: github.com/mqalkhatib/MixerSENet |
-| SpectralTrain: A Universal Framework for Hyperspectral Image Classification | 2511.16084v3 | B | code: github.com/mh-zhou/SpectralTrain |
-| Hyperspectral Image Classification via Efficient Global Spectral Supertoken Clustering | 2604.27364v1 | B | code: github.com/laprf/DSCC |
-| Spectral Dynamic Attention Network for Hyperspectral Image Super-Resolution | 2604.27326v1 | B | code: github.com/oucailab/SDANet |
+| MixerCA: An Efficient and Accurate Model for High-Performance Hyperspectral Image Classification | 2604.26138v1 | B | code: github.com/mqalkhatib/MixerCA |
+| A Synergistic CNN-Transformer Network with Pooling Attention Fusion for Hyperspectral Image Classification | 2604.23622v1 | B | code: github.com/chenpeng052/SCT-Net.git |
+| Synthetic Abundance Maps for Unsupervised Super-Resolution of Hyperspectral Remote Sensing Images | 2601.22755v2 | B | code: github.com/xinxinxu99/SISR-DL.git |
+| ConvVitMamba: Efficient Multiscale Convolution, Transformer, and Mamba-Based Sequence modelling for Hyperspectral Image Classification | 2604.18856v1 | B | code: github.com/mqalkhatib/ConvVitMamba |
+| Unmixing-Guided Spatial-Spectral Mamba with Clustering Tokens for Hyperspectral Image Classification | 2604.09948v1 | B | code: github.com/GSIL-UCalgary/Unmixing_guided_Mamba.git |
+| Cross-Domain Few-Shot Learning for Hyperspectral Image Classification Based on Mixup Foundation Model | 2601.22581v2 | B | code: github.com/Naeem-Paeedeh/MIFOMO |
 
 ### 可跑的 baseline（本期论文提到的开源实现，已验活）
 
 | 仓库 | 出处（arXiv ID） | HTTP |
 |---|---|---|
-| https://github.com/laprf/DSCC | 2604.27364v1 | ✅ 200 |
-| https://github.com/mh-zhou/SpectralTrain | 2511.16084v3 | ✅ 200 |
-| https://github.com/mqalkhatib/MixerSENet | 2606.01700v1 | ✅ 200 |
-| https://github.com/oucailab/SDANet | 2604.27326v1 | ✅ 200 |
+| https://github.com/GSIL-UCalgary/Unmixing_guided_Mamba.git | 2604.09948v1 | ✅ 200 |
+| https://github.com/Naeem-Paeedeh/MIFOMO | 2601.22581v2 | ✅ 200 |
+| https://github.com/chenpeng052/SCT-Net.git | 2604.23622v1 | ✅ 200 |
+| https://github.com/mqalkhatib/ConvVitMamba | 2604.18856v1 | ✅ 200 |
+| https://github.com/mqalkhatib/MixerCA | 2604.26138v1 | ✅ 200 |
+| https://github.com/xinxinxu99/SISR-DL.git | 2601.22755v2 | ✅ 200 |
 
-共 4 个仓库：**4 个可访问**
+共 6 个仓库：**6 个可访问**
